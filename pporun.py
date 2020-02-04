@@ -14,6 +14,7 @@ from ray.rllib.agents.ppo import appo
 from ray.tune.logger import pretty_print
 from ray.rllib.models import ModelCatalog
 from argparse import ArgumentParser
+from ray.tune import register_env
 from ray import tune
 import numpy as np
 from config import config as envconf
@@ -375,6 +376,8 @@ class MyKerasModel(TFModelV2):
     def value_function(self):
         return tf.reshape(self._value_out, [-1])
 
+def env_creator(config):
+    return LactamaseDocking(config)
 
 memory_story = 256.00  * 1e+9
 obj_store = 128.00 * 1e+9
@@ -388,9 +391,8 @@ args = parser.parse_args()
 
 ModelCatalog.register_custom_model("keras_model", MyKerasModel)
 ModelCatalog.register_custom_model("deepdrug3d", DeepDrug3D)
-
 ModelCatalog.register_custom_model("rnn", MyKerasRNN)
-
+register_env("lactamase_docking", env_creator)
 
 config = ppo.DEFAULT_CONFIG.copy()
 config['log_level'] = 'INFO'
