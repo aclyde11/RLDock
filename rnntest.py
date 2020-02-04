@@ -34,7 +34,7 @@ class MyKerasRNN(RecurrentTFModelV2):
                  num_outputs,
                  model_config,
                  name,
-                 hiddens_size=256,
+                 hiddens_size=128,
                  cell_size=64):
         super(MyKerasRNN, self).__init__(obs_space, action_space, num_outputs,
                                          model_config, name)
@@ -152,7 +152,7 @@ if __name__ == "__main__":
        'vf_share_layers' : True,
         "model": {
             "custom_model": "rnn",
-            "max_seq_len": 20,
+            "max_seq_len": 8,
         }}
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
