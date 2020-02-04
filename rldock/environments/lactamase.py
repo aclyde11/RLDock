@@ -66,13 +66,6 @@ class LactamaseDocking(gym.Env):
                                            high=highs,
                                            dtype=np.float32)
 
-        # self.observation_space = spaces.Dict({"image" : spaces.Box(low=0, high=2, shape=config['output_size'], #shape=(29, 24, 27, 16),
-        #                                         dtype=np.float32),
-        #                                       "state_vector" : spaces.Box(low=np.array([-31, 0], dtype=np.float32),
-        #                                                                   high=np.array([31, 1.1], dtype=np.float32))
-        #                                     }
-        #                                 )
-
         self.observation_space = spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32)
 
         self.voxelizer = Voxelizer(config['protein_wo_ligand'], config)
