@@ -34,7 +34,7 @@ config = {
     'random_dcd' : False, # use random protein states from folder
     'protein_state_folder': '/Users/austin/gpcr/structs/',  #*.pdbs used randomly
     'load_num' : 3,  # used for speed, set number of states each env uses for training.
-    'cache' : '/Users/austin/gpcr/cache/',
+    'cache' : 'cache/',
     'use_cache_voxels' : False,
 
     'ref_ligand_move' : [0, 0, 15], #move GPCR ligand out of reference pocket
