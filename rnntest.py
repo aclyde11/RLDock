@@ -140,7 +140,7 @@ if __name__ == "__main__":
         "gamma": 0.95,
         'eager': False,
         'reuse_actors' : True,
-        "num_gpus": args.gpu,
+        "num_gpus": args.ngpu,
         "train_batch_size": 64,
         "sample_batch_size": 64,
         'sgd_minibatch_size': 32,
