@@ -23,7 +23,7 @@ class LactamaseDocking(gym.Env):
             self.config.update(bypass)
             config.update(bypass)
         self.viewer = None
-
+        print(config)
         dims = np.array(config['bp_dimension']).flatten().astype(np.float32)
         self.logmessage("config after bypass", config)
 

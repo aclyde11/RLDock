@@ -23,10 +23,6 @@ from ray.rllib.utils import try_import_tf
 
 tf = try_import_tf()
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--run", type=str, default="PPO")
-parser.add_argument("--env", type=str, default="RepeatAfterMeEnv")
-parser.add_argument("--stop", type=int, default=90)
 
 
 class MyKerasRNN(RecurrentTFModelV2):
@@ -118,15 +114,23 @@ def env_creator(env_config):
     return LactamaseDocking(env_config)
     # return an env instance
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ngpu', type=int, default=0)
+    parser.add_argument('--ncpu', type=int, default=4)
+    parser.add_argument('--local', action='store_true')
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
     register_env("lactamase_docking", env_creator)
-
-    ray.init()
-    # memory_story = 256.00  * 1e+9
-    # obj_store = 128.00 * 1e+9
-    # ray.init(memory=memory_story, object_store_memory=obj_store)
-    args = parser.parse_args()
+    args = get_args()
+    if args.local:
+        ray.init()
+    else:
+        memory_story = 256.00  * 1e+9
+        obj_store = 128.00 * 1e+9
+        ray.init(memory=memory_story, object_store_memory=obj_store)
     ModelCatalog.register_custom_model("rnn", MyKerasRNN)
 
     d = {
@@ -135,6 +139,7 @@ if __name__ == "__main__":
         "env_config": envconf,
         "gamma": 0.95,
         'eager': False,
+        'reuse_actors' : True,
         "num_gpus": 0,
         "train_batch_size": 64,
         "sample_batch_size": 64,
