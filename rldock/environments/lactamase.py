@@ -216,7 +216,9 @@ class LactamaseDocking(gym.Env):
         self.trans[2] += action[2]
         self.rot = self.get_rotation(action[3:])
 
-        self.cur_atom = self.cur_atom.translate(action[0], action[1], action[2])
+        action_dec = action * (0.99 ** self.steps)
+
+        self.cur_atom = self.cur_atom.translate(action_dec[0], action_dec[1], action_dec[2])
         self.cur_atom = self.cur_atom.rotateM(self.rot)
         self.steps += 1
 
@@ -228,7 +230,7 @@ class LactamaseDocking(gym.Env):
         obs = self.get_obs()
 
         w1 = float(1.0)
-        w2 = 0.01
+        w2 = 0.001
         w3 = 0.01
 
         if self.config['normalize']:

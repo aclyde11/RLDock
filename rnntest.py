@@ -138,6 +138,7 @@ if __name__ == "__main__":
         'log_level': "INFO",
         "env_config": envconf,
         "gamma": 0.95,
+        'shuffle_sequence' : False,
         'eager': False,
         'reuse_actors' : True,
         "num_gpus": args.ngpu,

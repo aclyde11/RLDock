@@ -27,7 +27,7 @@ config = {
     'voxel_method' : 'C',
     'debug' : True,
 
-    'random' : None, # randomly place ligand around protein
+    'random' : 0.5, # randomly place ligand around protein
     'many_ligands' : False, # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval', #use train_ligands() or eval_ligands() to switch, default train_ligands called if manyligands not false
