@@ -259,7 +259,7 @@ class LactamaseDocking(gym.Env):
 
     def get_state_vector(self):
         max_steps = self.steps / self.config['max_steps']
-        return np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32)
+        return np.nan_to_num(np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32), posinf=100, neginf=-100, nan=-100)
 
     def logmessage(self,  *args, **kwargs):
         if self.config['debug']:
