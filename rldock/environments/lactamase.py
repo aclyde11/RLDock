@@ -178,18 +178,19 @@ class LactamaseDocking(gym.Env):
 
     @staticmethod
     def isRotationMatrix(M, eps=1e-2):
-        tag = False
-        I = np.identity(M.shape[0])
-        if np.all(np.abs(np.matmul(M, M.T) - I) <= eps) and (np.abs(np.linalg.det(M) - 1) <= eps):
-            tag = True
-        # else:
-        #     print('fail', M, np.abs(np.matmul(M, M.T) - I), np.abs(np.linalg.det(M) - 1))
-        return tag
+        # tag = False
+        # I = np.identity(M.shape[0])
+        # if np.all(np.abs(np.matmul(M, M.T) - I) <= eps) and (np.abs(np.linalg.det(M) - 1) <= eps):
+        #     tag = True
+        # # else:
+        # #     print('fail', M, np.abs(np.matmul(M, M.T) - I), np.abs(np.linalg.det(M) - 1))
+        # return tag
+        return True
 
         # https: // arxiv.org / pdf / 1812.07035.pdf
 
     def get_rotation(self, rot):
-        return R.from_euler('xyz', rot, degrees=True)
+        return R.from_euler('xyz', rot, degrees=True).as_matrix()
 
     def step(self, action):
         if np.any(np.isnan(action)):
