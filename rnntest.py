@@ -271,6 +271,7 @@ if __name__ == "__main__":
         "grad_clip": 10.0,
         # Target value for KL divergence.
         "kl_target": 0.01,
+        'env_config' : envconf
     }
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
