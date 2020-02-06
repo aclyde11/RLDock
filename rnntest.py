@@ -205,7 +205,7 @@ if __name__ == "__main__":
             "custom_model": "rnn",
             "max_seq_len": 8,
         },
-        'eager': True,
+        'eager': False,
         'reuse_actors': True,
         "env": 'lactamase_docking',
         'log_level': "INFO",

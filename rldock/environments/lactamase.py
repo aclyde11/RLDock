@@ -58,7 +58,9 @@ class LactamaseDocking(gym.Env):
             self.actions_multiplier = np.array(
                 [(config['action_space_d'][i] / (config['K_trans'] - 1)) for i in range(3)]
                 + [config['action_space_r'][i] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
-            self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
+            # self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
+            self.action_space = spaces.Tuple([spaces.Discrete(config['K_trans'])] * 3 + [spaces.Discrete(config['K_theta'])] * 6)
+
         else:
             lows = -1 * np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
             highs = np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
@@ -137,6 +139,7 @@ class LactamaseDocking(gym.Env):
         :return: action
         """
         if self.config['discrete']:
+            print('ACTION', action)
             action = np.array(action) * self.actions_multiplier
         action = np.array(action).flatten()
         return action
