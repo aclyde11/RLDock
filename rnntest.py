@@ -184,10 +184,10 @@ if __name__ == "__main__":
         "num_aggregation_workers": 1,
 
         # Learning params.
-        "grad_clip": 40.0,
+        "grad_clip": 1.0,
         # either "adam" or "rmsprop"
         "opt_type": "adam",
-        "lr": 0.0005,
+        "lr": 8e-5,
         "lr_schedule": None,
         # rmsprop considered
         "decay": 0.99,
