@@ -4,7 +4,7 @@ import os
 path = os.path.dirname(os.path.abspath(__file__)) + "/resources/gpcr"
 # path = ""
 config = {
-    'discrete' : True,
+    'discrete' : False,
     'K_trans' : 4,
     'K_theta' : 4,
     'normalize' : False,
