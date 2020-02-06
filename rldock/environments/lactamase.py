@@ -56,8 +56,8 @@ class LactamaseDocking(gym.Env):
 
         if config['discrete']:
             self.actions_multiplier = np.array(
-                [(config['action_space_d'][i] / config['discrete_trans']) / (config['K_trans'] - 1) for i in range(3)]
-                + [1.0 / config['discrete_theta'] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
+                [(config['action_space_d'][i] / (config['K_trans'] - 1)) for i in range(3)]
+                + [config['action_space_r'][i] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
             self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
         else:
             lows = -1 * np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
@@ -211,7 +211,7 @@ class LactamaseDocking(gym.Env):
         action = self.get_action(action)
         assert (action.shape[0] == 9)
 
-        action_dec = action * (0.98 ** self.steps)
+        action_dec = action * (self.config['decay'] ** self.steps)
 
         self.trans[0] += action[0]
         self.trans[1] += action[1]
