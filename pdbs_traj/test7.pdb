@@ -1,31 +1,96 @@
-HETATM    1  C1  UNL     1      19.996  13.908 -27.835  1.00  0.00           C
-HETATM    2  C2  UNL     1      20.782  12.759 -27.212  1.00  0.00           C
-HETATM    3  C3  UNL     1      20.300  11.413 -27.754  1.00  0.00           C
-HETATM    4  N1  UNL     1      21.051  10.238 -27.218  1.00  0.00           N
-HETATM    5  C4  UNL     1      22.410  10.074 -27.818  1.00  0.00           C
-HETATM    6  C5  UNL     1      22.453   8.922 -28.822  1.00  0.00           C
-HETATM    7  C6  UNL     1      21.638   9.179 -30.080  1.00  0.00           C
-HETATM    8  S1  UNL     1      20.952  10.032 -25.535  1.00  0.00           S
-HETATM    9  O1  UNL     1      22.082  10.726 -24.967  1.00  0.00           O
-HETATM   10  O2  UNL     1      19.610  10.346 -25.109  1.00  0.00           O
-HETATM   11  N2  UNL     1      21.165   8.367 -25.417  1.00  0.00           N
-HETATM   12  C7  UNL     1      22.101   7.784 -24.413  1.00  0.00           C
-HETATM   13  C8  UNL     1      21.948   8.373 -23.012  1.00  0.00           C
-HETATM   14  C9  UNL     1      23.540   7.868 -24.917  1.00  0.00           C
-HETATM   15  C10 UNL     1      20.033   7.463 -25.807  1.00  0.00           C
-HETATM   16  C11 UNL     1      19.022   7.272 -24.673  1.00  0.00           C
-HETATM   17  C12 UNL     1      19.331   7.764 -27.124  1.00  0.00           C
-HETATM   18  O3  UNL     1      19.642   7.302 -28.215  1.00  0.00           O
-HETATM   19  O4  UNL     1      18.267   8.588 -27.035  1.00  0.00           O
-CONECT    1    2
-CONECT    2    3
-CONECT    3    4
-CONECT    4    5    8
-CONECT    5    6
-CONECT    6    7
-CONECT    8    9    9   10   10
-CONECT    8   11
-CONECT   11   12   15
-CONECT   12   13   14
-CONECT   15   16   17
-CONECT   17   18   18   19
+HETATM    1 CL1  ETQ A 200      34.524  42.108  76.651  1.00 84.19      C   CL
+HETATM    2  C1  ETQ A 200      38.534  40.371  75.547  1.00 70.97      C    C
+HETATM    3  N1  ETQ A 200      36.931  37.258  76.623  1.00 33.74      C    N
+HETATM    4  O1  ETQ A 200      39.738  39.847  75.202  1.00 42.11      C    O
+HETATM    5  C2  ETQ A 200      38.250  41.702  75.218  1.00 10.02      C    C
+HETATM    6  N2  ETQ A 200      36.846  35.864  79.340  1.00 59.10      C    N
+HETATM    7  O2  ETQ A 200      35.424  39.398  77.239  1.00 57.13      C    O
+HETATM    8  C3  ETQ A 200      36.998  42.223  75.551  1.00 73.50      C    C
+HETATM    9  O3  ETQ A 200      39.133  37.758  76.660  1.00 22.72      C    O
+HETATM   10  C4  ETQ A 200      36.059  41.441  76.218  1.00 55.58      C    C
+HETATM   11  C5  ETQ A 200      36.355  40.122  76.564  1.00 81.34      C    C
+HETATM   12  C6  ETQ A 200      35.501  39.732  78.632  1.00 27.07      C    C
+HETATM   13  C7  ETQ A 200      37.605  39.578  76.238  1.00  3.16      C    C
+HETATM   14  C8  ETQ A 200      37.959  38.106  76.551  1.00 75.11      C    C
+HETATM   15  C9  ETQ A 200      37.084  35.812  76.883  1.00 64.12      C    C
+HETATM   16  C10 ETQ A 200      37.772  35.559  78.230  1.00 96.72      C    C
+HETATM   17  C11 ETQ A 200      38.119  34.077  78.352  1.00  0.76      C    C
+HETATM   18  C12 ETQ A 200      36.881  33.499  79.019  1.00 30.34      C    C
+HETATM   19  C13 ETQ A 200      36.522  34.592  80.014  1.00 46.96      C    C
+HETATM   20  C14 ETQ A 200      37.517  36.771  80.280  1.00 53.66      C    C
+HETATM   21  C15 ETQ A 200      36.490  37.570  81.068  1.00 42.91      C    C
+HETATM   22  C16 ETQ A 200      39.200  42.629  74.440  1.00 82.61      C    C
+HETATM   23  C17 ETQ A 200      40.536  42.842  75.155  1.00  7.73      C    C
+HETATM   24  H01 ETQ A 200      35.999  37.623  76.493  1.00 33.74      C    H
+HETATM   25  H02 ETQ A 200      39.665  39.411  74.349  1.00 42.11      C    H
+HETATM   26  H03 ETQ A 200      36.753  43.251  75.287  1.00 73.50      C    H
+HETATM   27  H04 ETQ A 200      35.273  38.850  79.230  1.00 27.07      C    H
+HETATM   28  H05 ETQ A 200      36.506  40.081  78.868  1.00 27.07      C    H
+HETATM   29  H06 ETQ A 200      34.781  40.519  78.858  1.00 27.07      C    H
+HETATM   30  H07 ETQ A 200      37.704  35.385  76.094  1.00 64.12      C    H
+HETATM   31  H08 ETQ A 200      36.099  35.346  76.893  1.00 64.12      C    H
+HETATM   32  H09 ETQ A 200      38.662  36.187  78.280  1.00 96.72      C    H
+HETATM   33  H10 ETQ A 200      39.037  33.891  78.910  1.00  0.76      C    H
+HETATM   34  H11 ETQ A 200      38.284  33.629  77.373  1.00  0.76      C    H
+HETATM   35  H12 ETQ A 200      37.042  32.523  79.476  1.00 30.34      C    H
+HETATM   36  H13 ETQ A 200      36.079  33.339  78.298  1.00 30.34      C    H
+HETATM   37  H14 ETQ A 200      35.471  34.544  80.304  1.00 46.96      C    H
+HETATM   38  H15 ETQ A 200      37.107  34.484  80.927  1.00 46.96      C    H
+HETATM   39  H16 ETQ A 200      38.147  37.461  79.719  1.00 53.66      C    H
+HETATM   40  H17 ETQ A 200      38.127  36.188  80.971  1.00 53.66      C    H
+HETATM   41  H18 ETQ A 200      35.888  36.891  81.671  1.00 42.91      C    H
+HETATM   42  H19 ETQ A 200      37.002  38.278  81.720  1.00 42.91      C    H
+HETATM   43  H20 ETQ A 200      35.844  38.112  80.377  1.00 42.91      C    H
+HETATM   44  H21 ETQ A 200      38.715  43.601  74.355  1.00 82.61      C    H
+HETATM   45  H22 ETQ A 200      39.394  42.189  73.462  1.00 82.61      C    H
+HETATM   46  H23 ETQ A 200      40.811  43.895  75.103  1.00  7.73      C    H
+HETATM   47  H24 ETQ A 200      40.442  42.543  76.200  1.00  7.73      C    H
+HETATM   48  H25 ETQ A 200      41.307  42.242  74.673  1.00  7.73      C    H
+CONECT    1   10
+CONECT    2    4    5   13
+CONECT    3   14   15   24
+CONECT    4    2   25
+CONECT    5    2    8   22
+CONECT    6   16   19   20
+CONECT    7   11   12
+CONECT    8    5   10   26
+CONECT    9   14
+CONECT   10    1    8   11
+CONECT   11    7   10   13
+CONECT   12    7   27   28   29
+CONECT   13    2   11   14
+CONECT   14    3    9   13
+CONECT   15    3   16   30   31
+CONECT   16    6   15   17   32
+CONECT   17   16   18   33   34
+CONECT   18   17   19   35   36
+CONECT   19    6   18   37   38
+CONECT   20    6   21   39   40
+CONECT   21   20   41   42   43
+CONECT   22    5   23   44   45
+CONECT   23   22   46   47   48
+CONECT   24    3
+CONECT   25    4
+CONECT   26    8
+CONECT   27   12
+CONECT   28   12
+CONECT   29   12
+CONECT   30   15
+CONECT   31   15
+CONECT   32   16
+CONECT   33   17
+CONECT   34   17
+CONECT   35   18
+CONECT   36   18
+CONECT   37   19
+CONECT   38   19
+CONECT   39   20
+CONECT   40   20
+CONECT   41   21
+CONECT   42   21
+CONECT   43   21
+CONECT   44   22
+CONECT   45   22
+CONECT   46   23
+CONECT   47   23
+CONECT   48   23

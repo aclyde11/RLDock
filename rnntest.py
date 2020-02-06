@@ -152,8 +152,8 @@ if __name__ == "__main__":
         # 4. The learner thread executes data parallel SGD across `num_gpus` GPUs
         #    on batches of size `train_batch_size`.
         #
-        "sample_batch_size": 50,
-        "train_batch_size": 500,
+        "sample_batch_size": 16,
+        "train_batch_size": 128,
         "min_iter_time_s": 10,
         "num_workers": args.ncpu,
         # number of GPUs the learner should use.
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         # only has an effect if `num_sgd_iter > 1`.
         "minibatch_buffer_size": 1,
         # number of passes to make over each train batch
-        "num_sgd_iter": 1,
+        "num_sgd_iter": 2,
         # set >0 to enable experience replay. Saved samples will be replayed with
         # a p:1 proportion to new data samples.
         "replay_proportion": 0.0,
@@ -181,10 +181,10 @@ if __name__ == "__main__":
         # level of queuing for sampling.
         "max_sample_requests_in_flight_per_worker": 2,
         # max number of workers to broadcast one set of weights to
-        "broadcast_interval": 1,
+        "broadcast_interval": 2,
         # use intermediate actors for multi-level aggregation. This can make sense
         # if ingesting >2GB/s of samples, or if the data requires decompression.
-        "num_aggregation_workers": 0,
+        "num_aggregation_workers": 1,
 
         # Learning params.
         "grad_clip": 40.0,
