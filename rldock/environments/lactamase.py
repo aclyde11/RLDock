@@ -235,10 +235,8 @@ class LactamaseDocking(gym.Env):
         w2 = 0.001
         w3 = 0.01
 
-        if self.config['normalize']:
-            reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action) - w3 * self.get_penalty_from_overlap(obs)
-        else:
-            reward = oe_score
+        reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action) - w3 * self.get_penalty_from_overlap(obs)
+
 
         self.last_reward = reward
         self.cur_reward_sum += reward
@@ -246,6 +244,8 @@ class LactamaseDocking(gym.Env):
         if self.config['movie_mode']:
             self.movie_step(self.steps)
 
+        reward  = np.nan_to_num(reward, neginf=-300, posinf=300, nan=-300)
+        obs = np.nan_to_num(obs, neginf=0, posinf=1, nan=0)
         assert(not np.any(np.isnan(obs)))
         assert(not np.any(np.isnan(reward)))
 

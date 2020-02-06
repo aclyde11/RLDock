@@ -7,7 +7,7 @@ config = {
     'discrete' : True,
     'K_trans' : 4,
     'K_theta' : 4,
-    'normalize' : True,
+    'normalize' : False,
     'action_space_d' : (2, 2, 2),
     'action_space_r' : (2, 2, 2, 2, 2, 2),
     'protein_wo_ligand' :  path + '/test3.pdb',
