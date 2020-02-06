@@ -9,7 +9,7 @@ config = {
     'K_theta' : 4,
     'normalize' : True,
     'action_space_d' : (2, 2, 2),
-    'action_space_r' : (2, 2, 2, 2, 2, 2),
+    'action_space_r' : (45, 45, 45),
     'protein_wo_ligand' :  path + '/test3.pdb',
     'ligand' : path + '/gpcr_ligand.pdb',
     'oe_box' : None,
@@ -20,7 +20,7 @@ config = {
     'voxelsize' : 1.0,
     'output_size' : (40, 40, 40, 8), # (39,40,42,8),
     'max_steps' : 100,
-    'decay' : 0.95, # ^25 = 0.001,
+    'decay' : 0.94, # ^25 = 0.001,
     'voxel_method' : 'C',
     'debug' : False,
 

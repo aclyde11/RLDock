@@ -9,7 +9,7 @@ from rldock.environments.LPDB import LigandPDB
 from rldock.environments.utils import MultiScorerFromBox, MultiScorerFromReceptor, MultiScorer, Voxelizer, l2_action, MinMax
 import glob
 import math
-
+from scipy.spatial.transform import Rotation as R
 # using 6DPT pdb from Lyu et al. (2019, nature)
 class LactamaseDocking(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -58,7 +58,7 @@ class LactamaseDocking(gym.Env):
                 [(config['action_space_d'][i] / (config['K_trans'] - 1)) for i in range(3)]
                 + [config['action_space_r'][i] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
             # self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
-            self.action_space = spaces.Tuple([spaces.Discrete(config['K_trans'])] * 3 + [spaces.Discrete(config['K_theta'])] * 6)
+            self.action_space = spaces.Tuple([spaces.Discrete(config['K_trans'])] * 3 + [spaces.Discrete(config['K_theta'])] * 3)
 
         else:
             lows = -1 * np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
@@ -189,19 +189,7 @@ class LactamaseDocking(gym.Env):
         # https: // arxiv.org / pdf / 1812.07035.pdf
 
     def get_rotation(self, rot):
-        a_1 = np.array(rot[:3], dtype=np.float64)
-        a_2 = np.array(rot[3:], dtype=np.float64)
-
-        b_1 = self.Nq(a_1)
-        b_2 = self.Nq(a_2 - np.dot(b_1, a_2) * b_1)
-        b_3 = np.cross(b_1, b_2)
-
-        M = np.stack([b_1, b_2, b_3]).T
-
-        if self.isRotationMatrix(M):
-            return M.astype(np.float32)
-        else:
-            return np.identity(M.shape[0], dtype=np.float32)
+        return R.from_euler('xyz', rot, degrees=True)
 
     def step(self, action):
         if np.any(np.isnan(action)):
@@ -212,15 +200,14 @@ class LactamaseDocking(gym.Env):
         action = self.get_action(action)
         assert (action.shape[0] == 9)
 
-        action_dec = action * (self.config['decay'] ** self.steps)
+        self.trans[0] += action[0] * (math.pow(self.config['decay'], self.steps))
+        self.trans[1] += action[1] * (math.pow(self.config['decay'], self.steps))
+        self.trans[2] += action[2] * (math.pow(self.config['decay'], self.steps))
 
-        self.trans[0] += action[0]
-        self.trans[1] += action[1]
-        self.trans[2] += action[2]
-        self.rot = self.get_rotation(action[3:])
+        self.rot = self.get_rotation(action[3:]  * (math.pow(self.config['decay'], self.steps)))
+        action = action * (math.pow(self.config['decay'], self.steps))
 
-
-        self.cur_atom = self.cur_atom.translate(action_dec[0], action_dec[1], action_dec[2])
+        self.cur_atom = self.cur_atom.translate(action[0], action[1], action[2])
         self.cur_atom = self.cur_atom.rotateM(self.rot)
         self.steps += 1
 
