@@ -139,7 +139,6 @@ class LactamaseDocking(gym.Env):
         :return: action
         """
         if self.config['discrete']:
-            print('ACTION', action)
             action = np.array(action) * self.actions_multiplier
         action = np.array(action).flatten()
         return action
