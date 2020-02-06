@@ -198,7 +198,7 @@ class LactamaseDocking(gym.Env):
             exit()
 
         action = self.get_action(action)
-        assert (action.shape[0] == 9)
+        assert (action.shape[0] == 6)
 
         self.trans[0] += action[0] * (math.pow(self.config['decay'], self.steps))
         self.trans[1] += action[1] * (math.pow(self.config['decay'], self.steps))
