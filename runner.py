@@ -53,7 +53,7 @@ if __name__ == '__main__':
         "gamma": 0.95,
         'shuffle_sequence' : False,
         'eager': False,
-        'reuse_actors' : True,
+        'reuse_actors' : False,
         "num_gpus": 0,
         "train_batch_size": 64,
         "sample_batch_size": 64,

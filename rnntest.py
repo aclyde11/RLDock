@@ -206,7 +206,7 @@ if __name__ == "__main__":
             "max_seq_len": 8,
         },
         'eager': False,
-        'reuse_actors': True,
+        'reuse_actors': False,
         "env": 'lactamase_docking',
         'log_level': "INFO",
         'vf_share_layers': True,

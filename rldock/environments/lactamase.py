@@ -244,7 +244,7 @@ class LactamaseDocking(gym.Env):
         if self.config['movie_mode']:
             self.movie_step(self.steps)
 
-        reward  = np.nan_to_num(reward, neginf=-300, posinf=300, nan=-300)
+        reward  = np.nan_to_num(reward, neginf=-100, posinf=100, nan=-100)
         obs = np.nan_to_num(obs, neginf=0, posinf=1, nan=0)
         assert(not np.any(np.isnan(obs)))
         assert(not np.any(np.isnan(reward)))
