@@ -244,7 +244,7 @@ if __name__ == "__main__":
         # minibatch size within each epoch.
         "sgd_minibatch_size": 128,
         # Whether to shuffle sequences in the batch when training (recommended).
-        "shuffle_sequences": True,
+        "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
         # execute per train batch).
         "num_sgd_iter": 30,
