@@ -10,7 +10,6 @@ from rldock.environments.utils import MultiScorerFromBox, MultiScorerFromRecepto
 import glob
 import math
 
-
 # using 6DPT pdb from Lyu et al. (2019, nature)
 class LactamaseDocking(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -246,6 +245,9 @@ class LactamaseDocking(gym.Env):
 
         if self.config['movie_mode']:
             self.movie_step(self.steps)
+
+        assert(not np.any(np.isnan(obs)))
+        assert(not np.any(np.isnan(reward)))
 
         return obs, \
                reward, \
