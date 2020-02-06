@@ -21,7 +21,7 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
-checkpoint = "/Users/austin/PPO_lactamase_docking_2020-02-04_09-39-594jeioj4a/checkpoint_126/checkpoint-126"
+checkpoint = "/Users/austin/checkpoint_726/checkpoint-726tmu"
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)

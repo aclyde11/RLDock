@@ -211,12 +211,13 @@ class LactamaseDocking(gym.Env):
         action = self.get_action(action)
         assert (action.shape[0] == 9)
 
+        action_dec = action * (0.98 ** self.steps)
+
         self.trans[0] += action[0]
         self.trans[1] += action[1]
         self.trans[2] += action[2]
         self.rot = self.get_rotation(action[3:])
 
-        action_dec = action * (0.99 ** self.steps)
 
         self.cur_atom = self.cur_atom.translate(action_dec[0], action_dec[1], action_dec[2])
         self.cur_atom = self.cur_atom.rotateM(self.rot)
