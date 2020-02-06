@@ -40,7 +40,6 @@ class MyKerasRNN(RecurrentTFModelV2):
         super(MyKerasRNN, self).__init__(obs_space, action_space, num_outputs,
                                          model_config, name)
         self.cell_size = cell_size
-        print(obs_space.shape)
         # Define input layers
         input_layer = tf.keras.layers.Input(
             shape=(None, envconf['output_size'][0], envconf['output_size'][1], envconf['output_size'][2], envconf['output_size'][3]), name="inputs")
@@ -66,9 +65,7 @@ class MyKerasRNN(RecurrentTFModelV2):
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 3, padding='valid', name='conv3d_22'))(h)
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
 
-        print('prior', h.shape)
         h = tf.keras.layers.Reshape([-1, 11 * 11 * 11 * 32])(h)
-        print(h.shape)
         dense1 = tf.keras.layers.Dense(
             hiddens_size, activation=tf.nn.relu, name="dense1")(h)
         lstm_out, state_h, state_c = tf.keras.layers.LSTM(

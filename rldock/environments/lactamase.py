@@ -357,8 +357,7 @@ class LactamaseDocking(gym.Env):
 
     def get_obs(self, quantity='all'):
         x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
-        if self.config['debug']:
-            print("SHAPE", x.shape)
+
         return x
 
     def make_receptor(self, pdb):
