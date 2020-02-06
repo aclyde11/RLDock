@@ -236,13 +236,13 @@ if __name__ == "__main__":
         # Initial coefficient for KL divergence.
         "kl_coeff": 0.2,
         # Size of batches collected from each worker.
-        "sample_batch_size": 100,
+        "sample_batch_size": 64,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 2000,
+        "train_batch_size": 512,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
-        "sgd_minibatch_size": 128,
+        "sgd_minibatch_size": 64,
         # Whether to shuffle sequences in the batch when training (recommended).
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
