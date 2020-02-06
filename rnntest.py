@@ -210,6 +210,7 @@ if __name__ == "__main__":
         "env": 'lactamase_docking',
         'log_level': "INFO",
         'vf_share_layers': True,
+        'use_lstm' : True
     }
 
     ppo_config = impala.DEFAULT_CONFIG
