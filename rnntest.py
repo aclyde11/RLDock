@@ -271,7 +271,9 @@ if __name__ == "__main__":
         "grad_clip": 10.0,
         # Target value for KL divergence.
         "kl_target": 0.01,
-        'env_config' : envconf
+        'env_config' : envconf,
+        "num_gpus": args.ngpu,
+        "num_workers" : args.ncpu
     }
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
