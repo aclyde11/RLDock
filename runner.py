@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
-checkpoint = "/Users/austin/checkpoint_326/checkpoint-326"
+checkpoint = "/Users/austin/checkpoint_101/checkpoint-101"
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)
@@ -38,13 +38,6 @@ if __name__ == '__main__':
     # ray.init(memory=memory_story, object_store_memory=obj_store)
     ModelCatalog.register_custom_model("rnn", MyKerasRNN)
 
-
-    envconf['normalize'] = False
-    # envconf['protein_wo_ligand'] = args.i
-    # envconf['oe_box'] = None
-    envconf['random'] = False
-    envconf['random_dcd'] = False
-    envconf['debug'] = False
 
     d = {
         # V-trace params (see vtrace.py).

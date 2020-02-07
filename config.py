@@ -1,5 +1,5 @@
 import os
-
+import math
 
 path = os.path.dirname(os.path.abspath(__file__)) + "/resources/gpcr"
 # path = ""
@@ -9,7 +9,7 @@ config = {
     'K_theta' : 4,
     'normalize' : True,
     'action_space_d' : (2, 2, 2),
-    'action_space_r' : (45, 45, 45),
+    'action_space_r' : (2 * math.pi, 2 * math.pi, 2 * math.pi),
     'protein_wo_ligand' :  path + '/test3.pdb',
     'ligand' : path + '/gpcr_ligand.pdb',
     'oe_box' : None,

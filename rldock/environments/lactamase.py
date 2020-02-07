@@ -185,12 +185,14 @@ class LactamaseDocking(gym.Env):
         # # else:
         # #     print('fail', M, np.abs(np.matmul(M, M.T) - I), np.abs(np.linalg.det(M) - 1))
         # return tag
+
         return True
 
         # https: // arxiv.org / pdf / 1812.07035.pdf
 
     def get_rotation(self, rot):
-        return R.from_euler('xyz', rot, degrees=True).as_matrix()
+        print("rot l2", np.power(rot,2).sum())
+        return R.from_euler('xyz', rot, degrees=False).as_matrix()
 
     def step(self, action):
         if np.any(np.isnan(action)):
