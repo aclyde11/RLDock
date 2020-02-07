@@ -191,7 +191,6 @@ class LactamaseDocking(gym.Env):
         # https: // arxiv.org / pdf / 1812.07035.pdf
 
     def get_rotation(self, rot):
-        print("rot l2", np.power(rot,2).sum())
         return R.from_euler('xyz', rot, degrees=False).as_matrix()
 
     def step(self, action):

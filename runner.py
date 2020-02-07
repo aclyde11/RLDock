@@ -135,7 +135,7 @@ if __name__ == '__main__':
     fp_path = "/Users/austin/PycharmProjects/RLDock/"
     with open("log.pml", 'w') as fp:
         with open("test.pml", 'w') as f:
-            for j in range(1):
+            for j in range(5):
                 rs = workers.sample()
                 print(rs)
                 print(list(rs.keys()))
