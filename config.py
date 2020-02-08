@@ -7,7 +7,7 @@ config = {
     'discrete' : False,
     'K_trans' : 4,
     'K_theta' : 4,
-    'normalize' : True,
+    'normalize' : False,
     'action_space_d' : (2, 2, 2),
     'action_space_r' : (2 * math.pi, 2 * math.pi, 2 * math.pi),
     'protein_wo_ligand' :  path + '/test3.pdb',
@@ -40,6 +40,6 @@ config = {
     'cache' : 'cache/',
     'use_cache_voxels' : False,
 
-    'ref_ligand_move' : [0, 0, 15], #move GPCR ligand out of reference pocket
+    'ref_ligand_move' : [0, 0, 10], #move GPCR ligand out of reference pocket
     'movie_mode' : False
 }
