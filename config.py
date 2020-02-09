@@ -20,12 +20,12 @@ config = {
     'voxelsize' : 1.0,
     'output_size' : (40, 40, 40, 8), # (39,40,42,8),
     'max_steps' : 100,
-    'decay' : 0.94, # ^25 = 0.001,
+    'decay' : 0.97, # ^25 = 0.001,
     'voxel_method' : 'C',
     'debug' : False,
 
     ## Reward function tuning
-    'overlap_weight' : 0.01,
+    'overlap_weight' : 0.1,
     'l2_decay' : 0.01,
     'dockscore_weight' : 1.0,
 
@@ -40,6 +40,6 @@ config = {
     'cache' : 'cache/',
     'use_cache_voxels' : False,
 
-    'ref_ligand_move' : [0, 0, 10], #move GPCR ligand out of reference pocket
+    'ref_ligand_move' : [0, 0, 7], #move GPCR ligand out of reference pocket
     'movie_mode' : False
 }
