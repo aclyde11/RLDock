@@ -203,7 +203,7 @@ if __name__ == "__main__":
         'env_config' : envconf,
         "model": {
             "custom_model": "rnn",
-            "max_seq_len": 10,
+            "max_seq_len": 8,
         },
         'eager': False,
         'reuse_actors': False,
