@@ -158,7 +158,7 @@ class LactamaseDocking(gym.Env):
             self.minmaxs[i].update(oescores[i])
             mins, maxs = self.minmaxs[i]()
             if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
-                norm_score = 0
+                norm_score = 1
             elif self.config['normalize']:
                 norm_score = (oescores[i] - maxs) / (maxs - mins)
             else:
