@@ -184,7 +184,7 @@ if __name__ == "__main__":
         "num_aggregation_workers": 1,
 
         # Learning params.
-        "grad_clip": 5.0,
+        "grad_clip": 20.0,
         # either "adam" or "rmsprop"
         "opt_type": "adam",
         "lr": 1e-4,
@@ -194,8 +194,8 @@ if __name__ == "__main__":
         "momentum": 0.0,
         "epsilon": 0.1,
         # balancing the three losses
-        "vf_loss_coeff": 0.55,
-        "entropy_coeff": 0.005,
+        "vf_loss_coeff": 0.6,
+        "entropy_coeff": 0.001,
         "entropy_coeff_schedule": None,
 
         # use fake (infinite speed) sampler for testing
