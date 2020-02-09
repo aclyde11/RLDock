@@ -1,7 +1,7 @@
 import os
 import math
 
-path = os.path.dirname(os.path.abspath(__file__)) + "/resources/gpcr"
+path = os.path.dirname(os.path.abspath(__file__)) + "/resources"
 # path = ""
 config = {
     'discrete' : False,
@@ -9,16 +9,16 @@ config = {
     'K_theta' : 4,
     'normalize' : True,
     'action_space_d' : (1, 1, 1),
-    'action_space_r' : (2 * math.pi, 2 * math.pi, 2 * math.pi),
-    'protein_wo_ligand' :  path + '/test3.pdb',
-    'ligand' : path + '/gpcr_ligand.pdb',
+    'action_space_r' : (math.pi, math.pi, math.pi),
+    'protein_wo_ligand' :  path + '/6dpz/6pdz_wo_ligand.pdb',
+    'ligand' : path + '/6dpz/6dpz_ligand.pdb',
     'oe_box' : None,
-    'bp_dimension': [40, 40, 40],
-    'bp_centers' : [43.31, 41.03, 77.37],
-    'bp_min' : [23.31, 21.030, 57.37],
-    'bp_max' : [63.31, 61.03, 97.37],
+    'bp_dimension': [36, 36, 36],
+    'bp_centers' : [ 30.748,   6.935,  31.502],
+    'bp_min' : [12.748, 24.935, 13.502],
+    'bp_max' : [48.748, -12.935, 39.502],
     'voxelsize' : 1.0,
-    'output_size' : (40, 40, 40, 8), # (39,40,42,8),
+    'output_size' : (36, 36, 36, 8), # (39,40,42,8),
     'max_steps' : 100,
     'decay' : 0.97, # ^25 = 0.001,
     'voxel_method' : 'C',
@@ -31,7 +31,7 @@ config = {
 
     ## Ligand and Protein selection features
     'random' : 0.33, # randomly place ligand around protein
-    'many_ligands' : True, # use many ligands from the random_ligand_folder
+    'many_ligands' : False, # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval', #use train_ligands() or eval_ligands() to switch, default train_ligands called if manyligands not false
     'random_dcd' : False, # use random protein states from folder
@@ -40,6 +40,6 @@ config = {
     'cache' : 'cache/',
     'use_cache_voxels' : False,
 
-    'ref_ligand_move' : [0, 0, 7], #move GPCR ligand out of reference pocket
+    'ref_ligand_move' : [0, 0, 0], #move GPCR ligand out of reference pocket
     'movie_mode' : False
 }

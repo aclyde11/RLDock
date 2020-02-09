@@ -65,7 +65,7 @@ class MyKerasRNN(RecurrentTFModelV2):
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 3, padding='valid', name='conv3d_22'))(h)
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
 
-        h = tf.keras.layers.Reshape([-1, 11 * 11 * 11 * 32])(h)
+        h = tf.keras.layers.Reshape([-1, 9 * 9 * 9 * 32])(h)
         dense1 = tf.keras.layers.Dense(
             hiddens_size, activation=tf.nn.relu, name="dense1")(h)
         lstm_out, state_h, state_c = tf.keras.layers.LSTM(
@@ -149,8 +149,8 @@ if __name__ == "__main__":
         # 4. The learner thread executes data parallel SGD across `num_gpus` GPUs
         #    on batches of size `train_batch_size`.
         #
-        "sample_batch_size": 128,
-        "train_batch_size": 512,
+        "sample_batch_size": 256,
+        "train_batch_size": 64,
         "min_iter_time_s": 10,
         "num_workers": args.ncpu,
         # number of GPUs the learner should use.
@@ -286,6 +286,6 @@ if __name__ == "__main__":
         if i % 1 == 0:
             print(pretty_print(result))
 
-        if i % 25 == 0:
+        if i % 100 == 0:
             checkpoint = trainer.save()
             print("checkpoint saved at", checkpoint)
