@@ -8,7 +8,7 @@ config = {
     'K_trans' : 4,
     'K_theta' : 4,
     'normalize' : True,
-    'action_space_d' : (2,2,2),
+    'action_space_d' : (1,1,1),
     'action_space_r' : (math.pi, math.pi, math.pi),
     'protein_wo_ligand' :  path + '/6dpz/6pdz_wo_ligand.pdb',
     'ligand' : path + '/6dpz/6dpz_ligand.pdb',
@@ -20,7 +20,7 @@ config = {
     'voxelsize' : 1.0,
     'output_size' : (36, 36, 36, 8), # (39,40,42,8),
     'max_steps' : 100,
-    'decay' : 0.97, # ^25 = 0.001,
+    'decay' : 0.96, # ^25 = 0.001,
     'voxel_method' : 'C',
     'debug' : False,
 
@@ -30,8 +30,8 @@ config = {
     'dockscore_weight' : 1.0,
 
     ## Ligand and Protein selection features
-    'random' : 0.25, # randomly place ligand around protein
-    'many_ligands' : False, # use many ligands from the random_ligand_folder
+    'random' : 0.2, # randomly place ligand around protein
+    'many_ligands' : True, # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval', #use train_ligands() or eval_ligands() to switch, default train_ligands called if manyligands not false
     'random_dcd' : False, # use random protein states from folder
