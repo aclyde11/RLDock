@@ -242,7 +242,7 @@ if __name__ == "__main__":
         "train_batch_size": 1024,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
-        "sgd_minibatch_size": 64,
+        "sgd_minibatch_size": 16,
         # Whether to shuffle sequences in the batch when training (recommended).
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
