@@ -174,7 +174,7 @@ if __name__ == "__main__":
         # wait for train batches to be available in minibatch buffer queue
         # this many seconds. This may need to be increased e.g. when training
         # with a slow environment
-        "learner_queue_timeout": 300,
+        "learner_queue_timeout": 2500,
         # level of queuing for sampling.
         "max_sample_requests_in_flight_per_worker": 2,
         # max number of workers to broadcast one set of weights to
