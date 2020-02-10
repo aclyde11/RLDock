@@ -149,7 +149,7 @@ if __name__ == "__main__":
         # 4. The learner thread executes data parallel SGD across `num_gpus` GPUs
         #    on batches of size `train_batch_size`.
         #
-        "sample_batch_size": 256,
+        "sample_batch_size": 512,
         "train_batch_size": 64,
         "min_iter_time_s": 10,
         "num_workers": args.ncpu,
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         "num_gpus": args.ngpu,
         # set >1 to load data into GPUs in parallel. Increases GPU memory usage
         # proportionally with the number of buffers.
-        "num_data_loader_buffers": 1,
+        "num_data_loader_buffers": 2,
         # how many train batches should be retained for minibatching. This conf
         # only has an effect if `num_sgd_iter > 1`.
         "minibatch_buffer_size": 2,
@@ -178,7 +178,7 @@ if __name__ == "__main__":
         # level of queuing for sampling.
         "max_sample_requests_in_flight_per_worker": 2,
         # max number of workers to broadcast one set of weights to
-        "broadcast_interval": 2,
+        "broadcast_interval": 8,
         # use intermediate actors for multi-level aggregation. This can make sense
         # if ingesting >2GB/s of samples, or if the data requires decompression.
         "num_aggregation_workers": 1,
@@ -194,8 +194,8 @@ if __name__ == "__main__":
         "momentum": 0.0,
         "epsilon": 0.1,
         # balancing the three losses
-        "vf_loss_coeff": 0.6,
-        "entropy_coeff": 0.001,
+        "vf_loss_coeff": 0.8,
+        "entropy_coeff": 0.0001,
         "entropy_coeff_schedule": None,
 
         # use fake (infinite speed) sampler for testing
