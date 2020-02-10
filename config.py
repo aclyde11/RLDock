@@ -8,7 +8,7 @@ config = {
     'K_trans' : 4,
     'K_theta' : 4,
     'normalize' : True,
-    'action_space_d' : (1, 1, 1),
+    'action_space_d' : (2,2,2),
     'action_space_r' : (math.pi, math.pi, math.pi),
     'protein_wo_ligand' :  path + '/6dpz/6pdz_wo_ligand.pdb',
     'ligand' : path + '/6dpz/6dpz_ligand.pdb',
