@@ -226,10 +226,10 @@ if __name__ == "__main__":
         },
         # Should use a critic as a baseline (otherwise don't use value baseline;
         # required for using GAE).
-        "use_critic": False,
+        "use_critic": True,
         # If true, use the Generalized Advantage Estimator (GAE)
         # with a value function, see https://arxiv.org/pdf/1506.02438.pdf.
-        "use_gae": False,
+        "use_gae": True,
         'use_lstm': True,
         # The GAE(lambda) parameter.
         "lambda": 1.0,
@@ -274,7 +274,7 @@ if __name__ == "__main__":
         'env_config' : envconf,
         "num_gpus": args.ngpu,
         "num_workers" : args.ncpu,
-        'batch_mode' : 'complete_episodes'
+        # 'batch_mode' : 'complete_episodes'
     }
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
