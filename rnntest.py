@@ -273,7 +273,8 @@ if __name__ == "__main__":
         "kl_target": 0.01,
         'env_config' : envconf,
         "num_gpus": args.ngpu,
-        "num_workers" : args.ncpu
+        "num_workers" : args.ncpu,
+        'batch_mode' : 'complete_episodes'
     }
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
