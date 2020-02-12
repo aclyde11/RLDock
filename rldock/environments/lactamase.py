@@ -40,8 +40,8 @@ class LactamaseDocking(gym.Env):
         # # #
         # Used for reset position if random set in envconf
         # # #
-        self.random_space_init_reset = spaces.Box(low=-0.5 * dims,
-                                                  high=0.5 * dims,
+        self.random_space_init_reset = spaces.Box(low=-0.4 * dims,
+                                                  high=0.4 * dims,
                                                   dtype=np.float32)
         self.random_space_rot_reset = spaces.Box(low=0,
                                                  high=2 * 3.1415926,
@@ -244,7 +244,7 @@ class LactamaseDocking(gym.Env):
                {'atom' : self.cur_atom.toPDB(), 'protein' : self.receptor_refereence_file_name}
 
     def decide_reset(self, score):
-        return (self.steps > self.config['max_steps']) or (not self.check_atom_in_box())
+        return (self.steps >= self.config['max_steps']) 
 
     def get_state_vector(self):
         max_steps = self.steps / self.config['max_steps']
