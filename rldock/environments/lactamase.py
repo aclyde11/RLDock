@@ -332,8 +332,8 @@ class LactamaseDocking(gym.Env):
             random_pos = start_atom.translate(x, y, z)
             random_pos = random_pos.rotate(theta_x=x_theta, theta_y=y_theta, theta_z=z_theta)
         else:
-            if self.config['ref_ligand_move']:
-                self.trans = [0, 0, 15]
+            if self.config['ref_ligand_move'] is not None:
+                self.trans = self.config['ref_ligand_move']
             else:
                 self.trans = [0, 0, 0]
 

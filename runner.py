@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
-checkpoint = "/Users/austin/checkpoint_101/checkpoint-101"
+checkpoint = "/Users/austin/checkpoint_11/checkpoint-11"
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)
@@ -40,88 +40,66 @@ if __name__ == '__main__':
 
 
     d = {
-        # V-trace params (see vtrace.py).
-        "vtrace": True,
-        "vtrace_clip_rho_threshold": 1.0,
-        "vtrace_clip_pg_rho_threshold": 1.0,
-
-        # System params.
-        #
-        # == Overview of data flow in IMPALA ==
-        # 1. Policy evaluation in parallel across `num_workers` actors produces
-        #    batches of size `sample_batch_size * num_envs_per_worker`.
-        # 2. If enabled, the replay buffer stores and produces batches of size
-        #    `sample_batch_size * num_envs_per_worker`.
-        # 3. If enabled, the minibatch ring buffer stores and replays batches of
-        #    size `train_batch_size` up to `num_sgd_iter` times per batch.
-        # 4. The learner thread executes data parallel SGD across `num_gpus` GPUs
-        #    on batches of size `train_batch_size`.
-        #
-        "sample_batch_size": 256,
-        "train_batch_size": 64,
-        "min_iter_time_s": 10,
-        "num_workers": 1,
-        # number of GPUs the learner should use.
-        "num_gpus": 0,
-        # set >1 to load data into GPUs in parallel. Increases GPU memory usage
-        # proportionally with the number of buffers.
-        "num_data_loader_buffers": 1,
-        # how many train batches should be retained for minibatching. This conf
-        # only has an effect if `num_sgd_iter > 1`.
-        "minibatch_buffer_size": 2,
-        # number of passes to make over each train batch
-        "num_sgd_iter": 2,
-        # set >0 to enable experience replay. Saved samples will be replayed with
-        # a p:1 proportion to new data samples.
-        "replay_proportion": 0.0,
-        # number of sample batches to store for replay. The number of transitions
-        # saved total will be (replay_buffer_num_slots * sample_batch_size).
-        "replay_buffer_num_slots": 0,
-        # max queue size for train batches feeding into the learner
-        "learner_queue_size": 16,
-        # wait for train batches to be available in minibatch buffer queue
-        # this many seconds. This may need to be increased e.g. when training
-        # with a slow environment
-        "learner_queue_timeout": 300,
-        # level of queuing for sampling.
-        "max_sample_requests_in_flight_per_worker": 2,
-        # max number of workers to broadcast one set of weights to
-        "broadcast_interval": 2,
-        # use intermediate actors for multi-level aggregation. This can make sense
-        # if ingesting >2GB/s of samples, or if the data requires decompression.
-        "num_aggregation_workers": 1,
-
-        # Learning params.
-        "grad_clip": 5.0,
-        # either "adam" or "rmsprop"
-        "opt_type": "adam",
-        "lr": 1e-4,
-        "lr_schedule": None,
-        # rmsprop considered
-        "decay": 0.99,
-        "momentum": 0.0,
-        "epsilon": 0.1,
-        # balancing the three losses
-        "vf_loss_coeff": 0.55,
-        "entropy_coeff": 0.005,
-        "entropy_coeff_schedule": None,
-
-        # use fake (infinite speed) sampler for testing
-        "_fake_sampler": False,
-        'env_config' : envconf,
         "model": {
             "custom_model": "rnn",
-            "max_seq_len": 8,
+            "max_seq_len": 16,
         },
-        'eager': False,
-        'reuse_actors': False,
-        "env": 'lactamase_docking',
-        'log_level': "INFO",
-        'vf_share_layers': True,
-        'use_lstm' : True
+        'gamma' : 0.9,
+        # Should use a critic as a baseline (otherwise don't use value baseline;
+        # required for using GAE).
+        "use_critic": False,
+        # If true, use the Generalized Advantage Estimator (GAE)
+        # with a value function, see https://arxiv.org/pdf/1506.02438.pdf.
+        "use_gae": True,
+        'use_lstm': True,
+        # The GAE(lambda) parameter.
+        "lambda": 1.0,
+        # Initial coefficient for KL divergence.
+        "kl_coeff": 0.5,
+        # Size of batches collected from each worker.
+        "sample_batch_size": 50,
+        # Number of timesteps collected for each SGD round. This defines the size
+        # of each SGD epoch.
+        "train_batch_size": 250,
+        # Total SGD batch size across all devices for SGD. This defines the
+        # minibatch size within each epoch.
+        "sgd_minibatch_size": 100,
+        # Whether to shuffle sequences in the batch when training (recommended).
+        "shuffle_sequences": False,
+        # Number of SGD iterations in each outer loop (i.e., number of epochs to
+        # execute per train batch).
+        "num_sgd_iter": 10,
+        # Stepsize of SGD.
+        "lr": 8e-5,
+        # Learning rate schedule.
+        "lr_schedule": None,
+        # Share layers for value function. If you set this to True, it's important
+        # to tune vf_loss_coeff.
+        "vf_share_layers": True,
+        # Coefficient of the value function loss. IMPORTANT: you must tune this if
+        # you set vf_share_layers: True.
+        "vf_loss_coeff": 1e-2,
+        # Coefficient of the entropy regularizer.
+        "entropy_coeff": 0.01,
+        # Decay schedule for the entropy regularizer.
+        "entropy_coeff_schedule": None,
+        # PPO clip parameter.
+        "clip_param": 0.2,
+        # Clip param for the value function. Note that this is sensitive to the
+        # scale of the rewards. If your expected V is large, increase this.
+        "vf_clip_param": 10.0,
+        # If specified, clip the global norm of gradients by this amount.
+        "grad_clip": 40.0,
+        # Target value for KL divergence.
+        "kl_target": 0.01,
+        'env_config' : envconf,
+        "num_gpus": 0,
+        "num_workers" :1,
+        'batch_mode' : 'complete_episodes',
+        'horizon' : 50
     }
 
-    ppo_config = impala.DEFAULT_CONFIG
+    ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
 
     get_dock_marks = []
@@ -135,7 +113,7 @@ if __name__ == '__main__':
     fp_path = "/Users/austin/PycharmProjects/RLDock/"
     with open("log.pml", 'w') as fp:
         with open("test.pml", 'w') as f:
-            for j in range(3):
+            for j in range(1):
                 rs = workers.sample()
                 print(rs)
                 print(list(rs.keys()))
