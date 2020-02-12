@@ -71,7 +71,7 @@ class LactamaseDocking(gym.Env):
 
         self.voxelizer = Voxelizer(config['protein_wo_ligand'], config)
         if self.config['oe_box'] is None:
-            self.oe_scorer = MultiScorerFromReceptor(self.make_receptor(self.config['protein_wo_ligand']))
+            self.oe_scorer = MultiScorerFromReceptor(self.make_receptor(self.config['protein_wo_ligand'], use_cache=config['use_cache_voxels']))
         else:
             self.logmessage("Found OE BOx for recetpor")
             self.oe_scorer = MultiScorer(config['oe_box'])
@@ -152,13 +152,13 @@ class LactamaseDocking(gym.Env):
             return 1.0
         return 0.0
 
-    def oe_score_combine(self, oescores, average=False):
+    def oe_score_combine(self, oescores, average=True):
         r = 0
         for i in range(len(oescores)):
             self.minmaxs[i].update(oescores[i])
             mins, maxs = self.minmaxs[i]()
             if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
-                norm_score = 0.2
+                norm_score = 0.02
             elif self.config['normalize']:
                 norm_score = (oescores[i] - maxs) / (maxs - mins)
             else:
@@ -191,7 +191,7 @@ class LactamaseDocking(gym.Env):
         # https: // arxiv.org / pdf / 1812.07035.pdf
 
     def get_rotation(self, rot):
-        return R.from_euler('xyz', rot, degrees=False).as_matrix()
+        return R.from_euler('XYZ', rot, degrees=False).as_matrix()
 
     def step(self, action):
         if np.any(np.isnan(action)):
@@ -353,13 +353,13 @@ class LactamaseDocking(gym.Env):
 
         return x
 
-    def make_receptor(self, pdb):
+    def make_receptor(self, pdb, use_cache=True):
         from openeye import oedocking, oechem
         import os.path
 
         file_name = str(os.path.basename(pdb))
         check_oeb = self.config['cache'] + file_name.split(".")[0] + ".oeb"
-        if os.path.isfile(check_oeb):
+        if use_cache and os.path.isfile(check_oeb):
             self.logmessage("Using stored receptor", check_oeb)
 
             g = oechem.OEGraphMol()

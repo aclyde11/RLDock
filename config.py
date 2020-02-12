@@ -8,16 +8,16 @@ config = {
     'K_trans' : 4,
     'K_theta' : 4,
     'normalize' : True,
-    'action_space_d' : (2,2,2),
+    'action_space_d' : (0.5,0.5,0.5),
     'action_space_r' : (math.pi * 2 * 0.1, math.pi * 2 * 0.1, math.pi * 2 * 0.1),
     'protein_wo_ligand' :  path + '/6dpz/6pdz_wo_ligand.pdb',
     'ligand' : path + '/6dpz/6dpz_ligand.pdb',
     'oe_box' : None,
-    'bp_dimension': [36, 36, 36],
+    'bp_dimension': [18, 18, 18],
     'bp_centers' : [ 30.748,   0.328,  23.421],
-    'bp_min' : [12.748, -17.672, 5.421],
-    'bp_max' : [48.748, 18.328, 41.421],
-    'voxelsize' : 1.0,
+    'bp_min' : [21.748, -8.672, 14.421],
+    'bp_max' : [39.748, 9.328, 32.421],
+    'voxelsize' : 0.5,
     'output_size' : (36, 36, 36, 8), # (39,40,42,8),
     'max_steps' : 50,
     'decay' : 0.95, # ^25 = 0.001,
@@ -30,7 +30,7 @@ config = {
     'dockscore_weight' : 1.0,
 
     ## Ligand and Protein selection features
-    'random' : 0.1, # randomly place ligand around protein
+    'random' : 0.0, # randomly place ligand around protein
     'many_ligands' : False, # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval', #use train_ligands() or eval_ligands() to switch, default train_ligands called if manyligands not false
