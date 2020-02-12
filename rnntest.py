@@ -116,6 +116,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--ngpu', type=int, default=0)
     parser.add_argument('--ncpu', type=int, default=4)
+    parser.add_argument('--restore', type=str, default=None)
     parser.add_argument('--local', action='store_true')
     return parser.parse_args()
 
@@ -281,7 +282,8 @@ if __name__ == "__main__":
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
     trainer = ppo.PPOTrainer(config=ppo_config, env='lactamase_docking')
-
+    if args.restore is not None:
+        trainer.restore(args.restore)
 
     for i in range(5000):
         result = trainer.train()

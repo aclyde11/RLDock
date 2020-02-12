@@ -30,7 +30,7 @@ config = {
     'dockscore_weight' : 1.0,
 
     ## Ligand and Protein selection features
-    'random' : 0.0, # randomly place ligand around protein
+    'random' : 0.1, # randomly place ligand around protein
     'many_ligands' : False, # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval', #use train_ligands() or eval_ligands() to switch, default train_ligands called if manyligands not false
