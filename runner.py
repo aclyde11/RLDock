@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
-checkpoint = "/Users/austin/checkpoint_281/checkpoint-281"
+checkpoint = "/Users/austin/checkpoint_312/checkpoint-312"
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)

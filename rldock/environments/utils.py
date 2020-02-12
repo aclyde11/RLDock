@@ -153,9 +153,9 @@ class MinMax:
         elif (x <= self.eps):
             self.max = max(self.max, x)
 
-def l2_action(action):
+def l2_action(action, steps):
     l2 = np.sum(np.power(np.array(action),2))
-    return float(l2)
+    return float(l2) * steps
 
 from moleculekit.tools.voxeldescriptors import getVoxelDescriptors
 from moleculekit.smallmol.smallmol import SmallMol

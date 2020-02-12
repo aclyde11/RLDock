@@ -23,6 +23,7 @@ config = {
     'decay' : 0.98, # ^25 = 0.001,
     'voxel_method' : 'C',
     'debug' : False,
+    'reward_ramp' : 1.0,
 
     ## Reward function tuning
     'overlap_weight' : 0.01,

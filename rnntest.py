@@ -35,8 +35,8 @@ class MyKerasRNN(RecurrentTFModelV2):
                  num_outputs,
                  model_config,
                  name,
-                 hiddens_size=128,
-                 cell_size=64):
+                 hiddens_size=512,
+                 cell_size=512):
         super(MyKerasRNN, self).__init__(obs_space, action_space, num_outputs,
                                          model_config, name)
         self.cell_size = cell_size
