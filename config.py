@@ -20,18 +20,18 @@ config = {
     'voxelsize' : 0.5,
     'output_size' : (36, 36, 36, 8), # (39,40,42,8),
     'max_steps' : 50,
-    'decay' : 0.98, # ^25 = 0.001,
+    'decay' : 0.999, # ^25 = 0.001,
     'voxel_method' : 'C',
     'debug' : False,
     'reward_ramp' : 1.0,
 
     ## Reward function tuning
-    'overlap_weight' : 0.01,
-    'l2_decay' : 0.1,
+    'overlap_weight' : 0.0,
+    'l2_decay' : 0.2,
     'dockscore_weight' : 1.0,
 
     ## Ligand and Protein selection features
-    'random' : 0.1, # randomly place ligand around protein
+    'random' : 0.25, # randomly place ligand around protein
     'many_ligands' : False, # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval', #use train_ligands() or eval_ligands() to switch, default train_ligands called if manyligands not false

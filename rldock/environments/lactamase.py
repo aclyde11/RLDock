@@ -226,7 +226,7 @@ class LactamaseDocking(gym.Env):
 
         reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action, self.steps) - w3 * self.get_penalty_from_overlap(obs)
         if self.config['reward_ramp'] is not None:
-            reward *= self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 25)/50))
+            reward *= self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
 
         self.last_reward = reward
         self.cur_reward_sum += reward
