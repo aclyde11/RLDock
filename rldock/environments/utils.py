@@ -173,8 +173,8 @@ class RigidLigand:
 
 class MinMax:
     def __init__(self, min=None, max=None):
-        self.min = min
-        self.max = max
+        self.min = 0
+        self.max = 50
         self.eps = 1e10
 
     def __call__(self):
@@ -186,9 +186,9 @@ class MinMax:
         else:
             self.min = min(self.min, x)
 
-        if self.max is None:
+        if self.max is None and (x < self.eps):
             self.max = x
-        else:
+        elif (x < self.eps):
             self.max = max(self.max, x)
 
 def l2_action(action, steps):
