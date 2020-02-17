@@ -157,7 +157,7 @@ class LactamaseDocking(gym.Env):
         for i in range(len(oescores)):
             self.minmaxs[i].update(oescores[i])
             mins, maxs = self.minmaxs[i]()
-            print("minmax", mins, maxs)
+            # print("minmax", mins, maxs)
             if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
                 norm_score = 0.02
             elif self.config['normalize']:
@@ -168,7 +168,7 @@ class LactamaseDocking(gym.Env):
 
         if average:
             r = r / len(oescores)
-        return r
+        return r - 0.5
 
     @staticmethod
     def Nq(q):
