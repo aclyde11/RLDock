@@ -223,7 +223,7 @@ class LactamaseDocking(gym.Env):
         oe_score = self.oe_scorer(self.cur_atom.toPDB())
         oe_score = self.oe_score_combine(oe_score)
         reset = self.decide_reset(oe_score)
-
+        improve = oe_score - self.last_score
         self.last_score = oe_score
         obs = self.get_obs()
 
@@ -231,7 +231,7 @@ class LactamaseDocking(gym.Env):
         w2 = self.config['l2_decay']
         w3 = self.config['overlap_weight']
 
-        reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action, self.steps) - w3 * self.get_penalty_from_overlap(obs)
+        reward = w1 * ( improve) - w2 * l2_action(action, self.steps) - w3 * self.get_penalty_from_overlap(obs)
         print("reward", reward)
         if self.config['reward_ramp'] is not None:
             reward *= self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
