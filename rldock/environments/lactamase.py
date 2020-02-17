@@ -153,22 +153,28 @@ class LactamaseDocking(gym.Env):
         return 0.0
 
     def oe_score_combine(self, oescores, average=True):
-        r = 0
-        for i in range(len(oescores)):
-            self.minmaxs[i].update(oescores[i])
-            mins, maxs = self.minmaxs[i]()
-            # print("minmax", mins, maxs)
-            if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
-                norm_score = 1.0
-            elif self.config['normalize']:
-                norm_score = (oescores[i] - maxs) / (maxs - mins)
-            else:
-                norm_score = oescores[i]
-            r += norm_score
+        score = oescores[0]
+        if score > 100:
+            score = 100
 
-        if average:
-            r = r / len(oescores)
-        return r - 0.5
+        return score
+
+        # r = 0
+        # for i in range(len(oescores)):
+        #     self.minmaxs[i].update(oescores[i])
+        #     mins, maxs = self.minmaxs[i]()
+        #     # print("minmax", mins, maxs)
+        #     if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
+        #         norm_score = 1.0
+        #     elif self.config['normalize']:
+        #         norm_score = (oescores[i] - maxs) / (maxs - mins)
+        #     else:
+        #         norm_score = oescores[i]
+        #     r += norm_score
+        #
+        # if average:
+        #     r = r / len(oescores)
+        # return r - 0.5
 
     @staticmethod
     def Nq(q):
