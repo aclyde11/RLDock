@@ -28,8 +28,8 @@ config = {
     ## Reward function tuning
     'overlap_weight' : 0.0001,
     'l2_decay' : 0.0001,
-    'dockscore_weight' : -1.0,
-    'score_weight' : -0.0001,
+    'dockscore_weight' : -0.001,
+    'score_weight' : -0.001,
 
     ## Ligand and Protein selection features
     'random' : 0.05, # randomly place ligand around protein
