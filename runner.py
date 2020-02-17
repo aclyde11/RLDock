@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
-checkpoint = "/Users/austin/checkpoint_312/checkpoint-312"
+checkpoint = "/Users/austin/checkpoint_341/checkpoint-341"
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     fp_path = "/Users/austin/PycharmProjects/RLDock/"
     with open("log.pml", 'w') as fp:
         with open("test.pml", 'w') as f:
-            for j in range(1):
+            for j in range(3):
                 rs = workers.sample()
                 print(rs)
                 print(list(rs.keys()))

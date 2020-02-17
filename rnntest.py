@@ -66,6 +66,10 @@ class MyKerasRNN(RecurrentTFModelV2):
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
 
         h = tf.keras.layers.Reshape([-1, 9 * 9 * 9 * 32])(h)
+
+        state_vec = tf.keras.layers.Input(shape=(None,1,), name='state_vec_input')
+        h2 = tf.keras.layers.Dense(16, activation=tf.nn.relu, name='st1')(state_vec)
+        h = tf.keras.layers.Concatenate()([h, h2])
         dense1 = tf.keras.layers.Dense(
             hiddens_size, activation=tf.nn.relu, name="dense1")(h)
         lstm_out, state_h, state_c = tf.keras.layers.LSTM(
@@ -84,15 +88,15 @@ class MyKerasRNN(RecurrentTFModelV2):
 
         # Create the RNN model
         self.rnn_model = tf.keras.Model(
-            inputs=[input_layer, seq_in, state_in_h, state_in_c],
+            inputs=[input_layer, seq_in, state_in_h, state_in_c, state_vec],
             outputs=[logits, values, state_h, state_c])
         self.register_variables(self.rnn_model.variables)
         self.rnn_model.summary()
 
     @override(RecurrentTFModelV2)
     def forward_rnn(self, inputs, state, seq_lens):
-        model_out, self._value_out, h, c = self.rnn_model([inputs, seq_lens] +
-                                                          state)
+        model_out, self._value_out, h, c = self.rnn_model([inputs[0], seq_lens] +
+                                                          state + [inputs[1]])
         return model_out, [h, c]
 
     @override(ModelV2)
@@ -223,7 +227,7 @@ if __name__ == "__main__":
     d = {
         "model": {
             "custom_model": "rnn",
-            "max_seq_len": 16,
+            "max_seq_len": 24,
         },
         'gamma' : 0.9,
         # Should use a critic as a baseline (otherwise don't use value baseline;
@@ -261,7 +265,7 @@ if __name__ == "__main__":
         # you set vf_share_layers: True.
         "vf_loss_coeff": 1e-1,
         # Coefficient of the entropy regularizer.
-        "entropy_coeff": 0.03,
+        "entropy_coeff": 0.06,
         # Decay schedule for the entropy regularizer.
         "entropy_coeff_schedule": None,
         # PPO clip parameter.

@@ -6,7 +6,7 @@ from gym import spaces
 import random
 from random import randint
 from rldock.environments.LPDB import LigandPDB
-from rldock.environments.utils import MultiScorerFromBox, MultiScorerFromReceptor, MultiScorer, Voxelizer, l2_action, MinMax
+from rldock.environments.utils import MultiScorerFromBox, MultiScorerFromReceptor, MultiScorer, Voxelizer, l2_action, MinMax, ScorerFromReceptor, Scorer
 import glob
 import math
 from scipy.spatial.transform import Rotation as R
@@ -67,18 +67,18 @@ class LactamaseDocking(gym.Env):
                                            high=highs,
                                            dtype=np.float32)
 
-        self.observation_space = spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32)
+        self.observation_space = spaces.Tuple([spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32), spaces.Box(low=-np.inf, high=np.inf, shape=[1], dtype=np.float32)])
 
         self.voxelizer = Voxelizer(config['protein_wo_ligand'], config)
         if self.config['oe_box'] is None:
-            self.oe_scorer = MultiScorerFromReceptor(self.make_receptor(self.config['protein_wo_ligand'], use_cache=config['use_cache_voxels']))
+            self.oe_scorer = ScorerFromReceptor(self.make_receptor(self.config['protein_wo_ligand'], use_cache=config['use_cache_voxels']))
         else:
             self.logmessage("Found OE BOx for recetpor")
-            self.oe_scorer = MultiScorer(config['oe_box'])
+            self.oe_scorer = Scorer(config['oe_box'])
 
 
         # self.minmaxs = [MinMax(-278, -8.45), MinMax(-1.3, 306.15), MinMax(-17.52, 161.49), MinMax(-2, 25.3)]
-        self.minmaxs = [MinMax(0, 1), MinMax(0, 1), MinMax(0, 1), MinMax(0, 1)]
+        self.minmaxs = [MinMax(0, 1)]
 
         self.reference_ligand = LigandPDB.parse(config['ligand'])
         self.reference_centers = self.reference_ligand.get_center()
@@ -220,9 +220,9 @@ class LactamaseDocking(gym.Env):
         self.last_score = oe_score
         obs = self.get_obs()
 
-        w1 = float(1.0)
-        w2 = 0.001
-        w3 = 0.01
+        w1 = self.config['dockscore_weight']
+        w2 = self.config['l2_decay']
+        w3 = self.config['overlap_weight']
 
         reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action, self.steps) - w3 * self.get_penalty_from_overlap(obs)
         if self.config['reward_ramp'] is not None:
@@ -351,8 +351,9 @@ class LactamaseDocking(gym.Env):
 
     def get_obs(self, quantity='all'):
         x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
-
-        return x
+        oe_score = self.oe_scorer(self.cur_atom.toPDB())
+        oe_score = self.oe_score_combine(oe_score)
+        return x,oe_score
 
     def make_receptor(self, pdb, use_cache=True):
         from openeye import oedocking, oechem

@@ -8,8 +8,8 @@ config = {
     'K_trans' : 4,
     'K_theta' : 4,
     'normalize' : True,
-    'action_space_d' : (0.5,0.5,0.5),
-    'action_space_r' : (math.pi * 2 * 0.1, math.pi * 2 * 0.1, math.pi * 2 * 0.1),
+    'action_space_d' : (5,5,5),
+    'action_space_r' : (math.pi * 2 * 0.5, math.pi * 2 * 0.5, math.pi * 2 * 0.5),
     'protein_wo_ligand' :  path + '/6dpz/6pdz_wo_ligand.pdb',
     'ligand' : path + '/6dpz/6dpz_ligand.pdb',
     'oe_box' : None,
@@ -27,7 +27,7 @@ config = {
 
     ## Reward function tuning
     'overlap_weight' : 0.0,
-    'l2_decay' : 0.2,
+    'l2_decay' : 0.3,
     'dockscore_weight' : 1.0,
 
     ## Ligand and Protein selection features

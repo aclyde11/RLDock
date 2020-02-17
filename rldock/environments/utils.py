@@ -60,6 +60,20 @@ class MultiScorerFromReceptor:
 
         return [scorer.ScoreLigand(ligand) for scorer in self.scorers]
 
+class ScorerFromReceptor:
+    def __init__(self, receptor):
+        self.receptor = oechem.OEGraphMol()
+        self.scorers = oedocking.OEScore(oedocking.OEScoreType_Chemgauss4)
+        self.scorers.Initialize(receptor)
+
+    def __call__(self, item : str):
+        ligand = oechem.OEGraphMol()
+        ligand_name = oechem.oemolistream()
+        ligand_name.openstring(item)
+        oechem.OEReadPDBFile(ligand_name, ligand)
+
+        return [self.scorers.ScoreLigand(ligand)]
+
 class MultiScorerFromBox:
     def __init__(self, pdb_file, xmax,ymax,zmax,xmin,ymin,zmin):
         self.receptor = oechem.OEGraphMol()
@@ -89,6 +103,30 @@ class MultiScorerFromBox:
         oechem.OEReadPDBFile(ligand_name, ligand)
 
         return [scorer.ScoreLigand(ligand) for scorer in self.scorers]
+
+class ScorerFromBox:
+    def __init__(self, pdb_file, xmax,ymax,zmax,xmin,ymin,zmin):
+        self.receptor = oechem.OEGraphMol()
+        self.scorers = oedocking.OEScore(oedocking.OEScoreType_Chemgauss4)
+
+        proteinStructure = oechem.OEGraphMol()
+        ifs = oechem.oemolistream(pdb_file)
+        ifs.SetFormat(oechem.OEFormat_PDB)
+        oechem.OEReadMolecule(ifs, proteinStructure)
+
+        box = oedocking.OEBox(xmax, ymax, zmax, xmin, ymin, zmin)
+
+        receptor = oechem.OEGraphMol()
+        s = oedocking.OEMakeReceptor(receptor, proteinStructure, box)
+        self.scorers.Initialize(receptor)
+
+    def __call__(self, item : str):
+        ligand = oechem.OEGraphMol()
+        ligand_name = oechem.oemolistream()
+        ligand_name.openstring(item)
+        oechem.OEReadPDBFile(ligand_name, ligand)
+
+        return [self.scorers.ScoreLigand(ligand)]
 
 class MultiScorer:
     def __init__(self, pdb_file):
