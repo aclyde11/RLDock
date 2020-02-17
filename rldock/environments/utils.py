@@ -175,7 +175,7 @@ class MinMax:
     def __init__(self, min=None, max=None):
         self.min = 0
         self.max = 50
-        self.eps = 1e10
+        self.eps = 100
 
     def __call__(self):
         return self.min, self.max
