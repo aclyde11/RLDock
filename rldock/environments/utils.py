@@ -186,9 +186,9 @@ class MinMax:
         else:
             self.min = min(self.min, x)
 
-        if self.max is None and (x <= self.eps):
+        if self.max is None:
             self.max = x
-        elif (x <= self.eps):
+        else:
             self.max = max(self.max, x)
 
 def l2_action(action, steps):
