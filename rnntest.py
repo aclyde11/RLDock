@@ -67,7 +67,7 @@ class MyKerasRNN(RecurrentTFModelV2):
 
         h = tf.keras.layers.Reshape([-1, 9 * 9 * 9 * 32])(h)
 
-        state_vec = tf.keras.layers.Input(shape=(None,1,), name='state_vec_input')
+        state_vec = tf.keras.layers.Input(shape=(None,2), name='state_vec_input')
         h2 = tf.keras.layers.Dense(16, activation=tf.nn.relu, name='st1')(state_vec)
         h = tf.keras.layers.Concatenate()([h, h2])
         dense1 = tf.keras.layers.Dense(
@@ -95,8 +95,9 @@ class MyKerasRNN(RecurrentTFModelV2):
 
     @override(RecurrentTFModelV2)
     def forward_rnn(self, inputs, state, seq_lens):
-        model_out, self._value_out, h, c = self.rnn_model([inputs[0], seq_lens] +
-                                                          state + [inputs[1]])
+        # print("Forward rnn", inputs.shape, inputs[0].shape, inputs[1].shape)
+        model_out, self._value_out, h, c = self.rnn_model([inputs[:,:,:-2], seq_lens] +
+                                                          state + [inputs[:,:,-2:]])
         return model_out, [h, c]
 
     @override(ModelV2)

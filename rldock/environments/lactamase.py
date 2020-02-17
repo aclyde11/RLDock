@@ -67,7 +67,7 @@ class LactamaseDocking(gym.Env):
                                            high=highs,
                                            dtype=np.float32)
 
-        self.observation_space = spaces.Tuple([spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32), spaces.Box(low=-np.inf, high=np.inf, shape=[1], dtype=np.float32)])
+        self.observation_space = spaces.Tuple([spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32), spaces.Box(low=-np.inf, high=np.inf, shape=[2], dtype=np.float32)])
 
         self.voxelizer = Voxelizer(config['protein_wo_ligand'], config)
         if self.config['oe_box'] is None:
@@ -148,7 +148,7 @@ class LactamaseDocking(gym.Env):
         :param obs: obs from model, or hidden env state
         :return: penalty for overlap, positive value
         """
-        if np.max(obs[:, :, :, -1]) == 2:
+        if np.max(obs[0][:, :, :, -1]) == 2:
             return 1.0
         return 0.0
 
@@ -235,8 +235,8 @@ class LactamaseDocking(gym.Env):
             self.movie_step(self.steps)
 
         reward  = np.nan_to_num(reward, neginf=-100, posinf=100, nan=-100)
-        obs = np.nan_to_num(obs, neginf=0, posinf=1, nan=0)
-        assert(not np.any(np.isnan(obs)))
+        # obs[0] = np.nan_to_num(obs[0], neginf=0, posinf=1, nan=0)
+        # assert(not np.any(np.isnan(obs[0])))
         assert(not np.any(np.isnan(reward)))
 
         return obs, \
@@ -353,7 +353,7 @@ class LactamaseDocking(gym.Env):
         x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
         oe_score = self.oe_scorer(self.cur_atom.toPDB())
         oe_score = self.oe_score_combine(oe_score)
-        return x,oe_score
+        return (x,np.array([oe_score, self.steps]))
 
     def make_receptor(self, pdb, use_cache=True):
         from openeye import oedocking, oechem
