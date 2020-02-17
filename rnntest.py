@@ -266,7 +266,7 @@ if __name__ == "__main__":
         # you set vf_share_layers: True.
         "vf_loss_coeff": 0.1,
         # Coefficient of the entropy regularizer.
-        "entropy_coeff": 0.06,
+        "entropy_coeff": 0.01,
         # Decay schedule for the entropy regularizer.
         "entropy_coeff_schedule": None,
         # PPO clip parameter.
