@@ -157,6 +157,7 @@ class LactamaseDocking(gym.Env):
         for i in range(len(oescores)):
             self.minmaxs[i].update(oescores[i])
             mins, maxs = self.minmaxs[i]()
+            print("minmax", mins, maxs)
             if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
                 norm_score = 0.02
             elif self.config['normalize']:
@@ -225,6 +226,7 @@ class LactamaseDocking(gym.Env):
         w3 = self.config['overlap_weight']
 
         reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action, self.steps) - w3 * self.get_penalty_from_overlap(obs)
+        print("reward", reward)
         if self.config['reward_ramp'] is not None:
             reward *= self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
 
@@ -353,7 +355,7 @@ class LactamaseDocking(gym.Env):
         x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
         oe_score = self.oe_scorer(self.cur_atom.toPDB())
         oe_score = self.oe_score_combine(oe_score)
-        return (x,np.array([oe_score, self.steps]))
+        return (x,np.array([0.0, self.steps]))
 
     def make_receptor(self, pdb, use_cache=True):
         from openeye import oedocking, oechem

@@ -26,8 +26,8 @@ config = {
     'reward_ramp' : 1.0,
 
     ## Reward function tuning
-    'overlap_weight' : 0.0,
-    'l2_decay' : 0.3,
+    'overlap_weight' : 0.1,
+    'l2_decay' : 0.1,
     'dockscore_weight' : 1.0,
 
     ## Ligand and Protein selection features
