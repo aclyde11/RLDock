@@ -254,9 +254,9 @@ if __name__ == "__main__":
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
         # execute per train batch).
-        "num_sgd_iter": 10,
+        "num_sgd_iter": 8,
         # Stepsize of SGD.
-        "lr": 1e-4,
+        "lr": 8e-5,
         # Learning rate schedule.
         "lr_schedule": None,
         # Share layers for value function. If you set this to True, it's important
@@ -264,9 +264,9 @@ if __name__ == "__main__":
         "vf_share_layers": True,
         # Coefficient of the value function loss. IMPORTANT: you must tune this if
         # you set vf_share_layers: True.
-        "vf_loss_coeff": 0.01,
+        "vf_loss_coeff": 0.001,
         # Coefficient of the entropy regularizer.
-        "entropy_coeff": 0.05,
+        "entropy_coeff": 0.03,
         # Decay schedule for the entropy regularizer.
         "entropy_coeff_schedule": None,
         # PPO clip parameter.
