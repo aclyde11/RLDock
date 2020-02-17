@@ -237,7 +237,7 @@ class LactamaseDocking(gym.Env):
             reward *= self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
 
         if reset:
-            reward = oe_score * -1.0
+            reward = oe_score * -2.0
             print("final reset value", reward)
 
         self.last_reward = reward
