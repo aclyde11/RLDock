@@ -78,7 +78,7 @@ class LactamaseDocking(gym.Env):
 
 
         # self.minmaxs = [MinMax(-278, -8.45), MinMax(-1.3, 306.15), MinMax(-17.52, 161.49), MinMax(-2, 25.3)]
-        self.minmaxs = [MinMax(0, 1)]
+        self.minmaxs = [MinMax()]
 
         self.reference_ligand = LigandPDB.parse(config['ligand'])
         self.reference_centers = self.reference_ligand.get_center()
