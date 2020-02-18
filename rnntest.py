@@ -97,7 +97,7 @@ class MyKerasRNN(RecurrentTFModelV2):
             inputs=[input_layer, seq_in, state_in_h, state_in_c, state_vec],
             outputs=[logits, values, state_h, state_c])
         self.register_variables(self.rnn_model.variables)
-        self.rnn_model.summary()
+        # self.rnn_model.summary()
 
     @override(RecurrentTFModelV2)
     def forward_rnn(self, inputs, state, seq_lens):
@@ -239,7 +239,7 @@ if __name__ == "__main__":
         'gamma' : 0.9,
         # Should use a critic as a baseline (otherwise don't use value baseline;
         # required for using GAE).
-        "use_critic": False,
+        "use_critic": True,
         # If true, use the Generalized Advantage Estimator (GAE)
         # with a value function, see https://arxiv.org/pdf/1506.02438.pdf.
         "use_gae": True,
@@ -252,10 +252,10 @@ if __name__ == "__main__":
         "sample_batch_size": 50,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 250,
+        "train_batch_size": 126,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
-        "sgd_minibatch_size": 100,
+        "sgd_minibatch_size": 64,
         # Whether to shuffle sequences in the batch when training (recommended).
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to

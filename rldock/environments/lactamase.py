@@ -22,7 +22,7 @@ class LactamaseDocking(gym.Env):
             self.config.update(bypass)
             config.update(bypass)
         self.viewer = None
-        print(config)
+        self.logmessage(config)
         dims = np.array(config['bp_dimension']).flatten().astype(np.float32)
         self.logmessage("config after bypass", config)
 
@@ -85,7 +85,7 @@ class LactamaseDocking(gym.Env):
         self.atom_center = LigandPDB.parse(config['ligand'])
         self.names = []
 
-        if config['random_ligand_folder'] is not None:
+        if config['many_ligands'] and config['random_ligand_folder'] is not None:
             self.train_ligands()
         else:
             self.rligands = None
@@ -102,15 +102,15 @@ class LactamaseDocking(gym.Env):
         self.receptor_refereence_file_name = config['protein_wo_ligand']
 
         self.ordered_recept_voxels = None
-        if self.config['movie_mode']:
-            import os.path
-            listings = glob.glob(self.config['protein_state_folder'] + "*.pdb")
-            print("listing len", len(listings))
-            ordering = list(map(lambda x : int(str(os.path.basename(x)).split('.')[0].split("_")[-1]), listings))
-            ordering = np.argsort(ordering)[:200]
-            print("Making ordering....")
-            print(listings[0], len(listings))
-            self.ordered_recept_voxels = [listings[i] for i in ordering]
+        # if self.config['movie_mode']:
+        #     import os.path
+        #     listings = glob.glob(self.config['protein_state_folder'] + "*.pdb")
+        #     self.logmessage("listing len", len(listings))
+        #     ordering = list(map(lambda x : int(str(os.path.basename(x)).split('.')[0].split("_")[-1]), listings))
+        #     ordering = np.argsort(ordering)[:200]
+        #     self.logmessage("Making ordering....")
+        #     self.logmessage(listings[0], len(listings))
+        #     self.ordered_recept_voxels = [listings[i] for i in ordering]
 
 
     def reset_ligand(self, newlig):
@@ -131,7 +131,7 @@ class LactamaseDocking(gym.Env):
                 self.rot[i] = 2 * 3.14159265 + self.rot[i]
             self.rot[i] = self.rot[i] % (2 * 3.14159265)
 
-    def get_action(self, action):
+    def get_action(self, action, use_decay=True):
         """
         Override this function if you want to modify the action in some deterministic sense...
         :param action: action from step funtion
@@ -139,7 +139,11 @@ class LactamaseDocking(gym.Env):
         """
         if self.config['discrete']:
             action = np.array(action) * self.actions_multiplier
-        action = np.array(action).flatten()
+        else:
+            action = np.array(action).flatten()
+
+        if use_decay and self.config['decay'] is not None:
+            action = action * math.pow(self.config['decay'], self.steps)
         return action
 
     def get_penalty_from_overlap(self, obs):
@@ -148,76 +152,33 @@ class LactamaseDocking(gym.Env):
         :param obs: obs from model, or hidden env state
         :return: penalty for overlap, positive value
         """
-        if np.max(obs[0][:, :, :, -1]) == 2:
-            return 1.0
-        return 0.0
+        return np.sum(obs[0][:, :, :, -1] >= 2)
 
     def oe_score_combine(self, oescores, average=True):
         score = oescores[0]
-        if score > 100:
-            score = 100
-
         return score
 
-        # r = 0
-        # for i in range(len(oescores)):
-        #     self.minmaxs[i].update(oescores[i])
-        #     mins, maxs = self.minmaxs[i]()
-        #     # print("minmax", mins, maxs)
-        #     if self.config['normalize'] and oescores[i] > self.minmaxs[i].eps:
-        #         norm_score = 1.0
-        #     elif self.config['normalize']:
-        #         norm_score = (oescores[i] - maxs) / (maxs - mins)
-        #     else:
-        #         norm_score = oescores[i]
-        #     r += norm_score
-        #
-        # if average:
-        #     r = r / len(oescores)
-        # return r - 0.5
-
-    @staticmethod
-    def Nq(q):
-        t = np.linalg.norm(q)
-        if t == 0:
-            return np.zeros(q.shape)
-        return q / t
-
-    @staticmethod
-    def isRotationMatrix(M, eps=1e-2):
-        # tag = False
-        # I = np.identity(M.shape[0])
-        # if np.all(np.abs(np.matmul(M, M.T) - I) <= eps) and (np.abs(np.linalg.det(M) - 1) <= eps):
-        #     tag = True
-        # # else:
-        # #     print('fail', M, np.abs(np.matmul(M, M.T) - I), np.abs(np.linalg.det(M) - 1))
-        # return tag
-
-        return True
-
-        # https: // arxiv.org / pdf / 1812.07035.pdf
+    def get_rotation_matrix(self, rot):
+        return R.from_euler('xyz', rot, degrees=False).as_matrix()
 
     def get_rotation(self, rot):
-        return R.from_euler('XYZ', rot, degrees=False).as_matrix()
+        return rot
 
     def step(self, action):
         if np.any(np.isnan(action)):
-            print(action)
-            print("ERROR, nan action from get action")
-            exit()
+            self.logerror("ERROR, nan action from get action", action)
 
         action = self.get_action(action)
+        rotM = self.get_rotation_matrix(action[3:])
         assert (action.shape[0] == 6)
 
-        self.trans[0] += action[0] * (math.pow(self.config['decay'], self.steps))
-        self.trans[1] += action[1] * (math.pow(self.config['decay'], self.steps))
-        self.trans[2] += action[2] * (math.pow(self.config['decay'], self.steps))
+        self.cur_atom = self.translate_molecule(self.cur_atom, action[0], action[1], action[2])
+        self.cur_atom = self.rotate_molecule(self.cur_atom, rotM)
 
-        self.rot = self.get_rotation(action[3:]  * (math.pow(self.config['decay'], self.steps)))
-        action = action * (math.pow(self.config['decay'], self.steps))
-
-        self.cur_atom = self.cur_atom.translate(action[0], action[1], action[2])
-        self.cur_atom = self.cur_atom.rotateM(self.rot)
+        self.trans[0] += action[0]
+        self.trans[1] += action[1]
+        self.trans[2] += action[2]
+        self.rot = np.matmul(self.rot, rotM)
         self.steps += 1
 
         oe_score = self.oe_scorer(self.cur_atom.toPDB())
@@ -227,18 +188,33 @@ class LactamaseDocking(gym.Env):
         self.last_score = oe_score
         obs = self.get_obs()
 
-        w1 = self.config['dockscore_weight']
-        w2 = self.config['l2_decay']
-        w3 = self.config['overlap_weight']
+        w1 = min(0, -1 * self.config['improve_weight'] * improve)
+        w2 = -1 * self.config['l2_decay'] *  l2_action(action, self.steps)
+        w3 = -1 * self.config['overlap_weight'] * self.get_penalty_from_overlap(obs)
+        w4 = -1 * self.config['score_weight'] * oe_score
+        reward = w1  + w4  + w2 * + w3
 
-        reward = w1 * ( improve) + self.config['score_weight'] * oe_score - w2 * l2_action(action, self.steps) - w3 * self.get_penalty_from_overlap(obs)
-        print("reward", reward)
         if self.config['reward_ramp'] is not None:
-            reward *= self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
+            ramp = self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
+            reward = reward * ramp
+        else:
+            ramp = None
 
         if reset:
             reward = oe_score * -1.0
-            print("final reset value", reward)
+            self.logmessage("final reset value, replaces reward", reward)
+
+        self.logmessage(
+            {"reward" : reward,
+             "ramp" : ramp,
+             "w1" : w1,
+             "w2": w2,
+             "w3": w3,
+             "w4": w4,
+             'cur_step' : self.steps,
+             'oe_score' : oe_score,
+             'trans' : self.trans,
+             'reset' : reset})
 
         self.last_reward = reward
         self.cur_reward_sum += reward
@@ -246,15 +222,15 @@ class LactamaseDocking(gym.Env):
         if self.config['movie_mode']:
             self.movie_step(self.steps)
 
-        reward  = np.nan_to_num(reward, neginf=-100, posinf=100, nan=-100)
-        # obs[0] = np.nan_to_num(obs[0], neginf=0, posinf=1, nan=0)
-        # assert(not np.any(np.isnan(obs[0])))
         assert(not np.any(np.isnan(reward)))
+        assert(not np.any(np.isnan(obs[0])))
+        assert(not np.any(np.isnan(obs[1])))
 
         return obs, \
                reward, \
                reset, \
-               {'atom' : self.cur_atom.toPDB(), 'protein' : self.receptor_refereence_file_name}
+               {'atom' : self.cur_atom.toPDB(),
+                'protein' : self.receptor_refereence_file_name}
 
     def decide_reset(self, score):
         return (self.steps >= self.config['max_steps']) 
@@ -263,9 +239,13 @@ class LactamaseDocking(gym.Env):
         max_steps = self.steps / self.config['max_steps']
         return np.nan_to_num(np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32), posinf=100, neginf=-100, nan=-100)
 
-    def logmessage(self,  *args, **kwargs):
+    def logmessage(self, *args, **kwargs):
         if self.config['debug']:
             print(*args, **kwargs)
+
+    def logerror(self, *args, **kwargs):
+        print(*args, **kwargs)
+        exit()
 
     def reset_random_recep(self):
         import random as rs
@@ -276,9 +256,8 @@ class LactamaseDocking(gym.Env):
         try:
             self.receptor_refereence_file_name = self.ordered_recept_voxels[step]
         except:
-            print("Error length...", len(self.ordered_recept_voxels))
+            self.logerror("Error length...", len(self.ordered_recept_voxels))
             exit()
-
 
         pdb_file_name = self.receptor_refereence_file_name
 
@@ -292,7 +271,7 @@ class LactamaseDocking(gym.Env):
                 self.oe_scorer = MultiScorerFromReceptor(recept)
                 self.voxelcache[pdb_file_name] = (self.voxelizer, self.oe_scorer)
             except:
-                print("Error, not change.")
+                self.logerror("Error, not change.")
 
     def reset(self, random=None, many_ligands=None, random_dcd=None, load_num=None):
         random = random or self.config['random']
@@ -300,38 +279,36 @@ class LactamaseDocking(gym.Env):
         random_dcd = random_dcd or self.config['random_dcd']
         load_num = load_num or self.config['load_num']
 
-        if self.config['movie_mode']:
-            import random as rs
-            self.movie_step(rs.randint(0, 50))
-
-        elif random_dcd:
-            import random as rs
-            if len(self.voxelcache) < load_num:
-                self.logmessage("Voxel cache is empty or with size", len(self.voxelcache))
-                listings = glob.glob(self.config['protein_state_folder'] + "*.pdb")
-                self.logmessage("Found", len(listings), "protein states in folder.")
-                while len(self.voxelcache) < load_num:
-                    pdb_file_name = rs.choice(listings)
-
-                    if pdb_file_name in self.voxelcache:
-                        self.voxelizer, self.oe_scorer = self.voxelcache[pdb_file_name]
-                    else:
-                        try:
-                            self.logmessage("Not in cache, making....", pdb_file_name)
-                            self.voxelizer = Voxelizer(pdb_file_name, self.config, write_cache=True)
-                            recept = self.make_receptor(pdb_file_name)
-                            self.oe_scorer = MultiScorerFromReceptor(recept)
-                            self.voxelcache[pdb_file_name] = (self.voxelizer, self.oe_scorer)
-                        except:
-                            print("Error, not change.")
-
-            self.reset_random_recep()
+        # if self.config['movie_mode']:
+        #     import random as rs
+        #     self.movie_step(rs.randint(0, 50))
+        # elif random_dcd:
+        #     import random as rs
+        #     if len(self.voxelcache) < load_num:
+        #         self.logmessage("Voxel cache is empty or with size", len(self.voxelcache))
+        #         listings = glob.glob(self.config['protein_state_folder'] + "*.pdb")
+        #         self.logmessage("Found", len(listings), "protein states in folder.")
+        #         while len(self.voxelcache) < load_num:
+        #             pdb_file_name = rs.choice(listings)
+        #
+        #             if pdb_file_name in self.voxelcache:
+        #                 self.voxelizer, self.oe_scorer = self.voxelcache[pdb_file_name]
+        #             else:
+        #                 try:
+        #                     self.logmessage("Not in cache, making....", pdb_file_name)
+        #                     self.voxelizer = Voxelizer(pdb_file_name, self.config, write_cache=True)
+        #                     recept = self.make_receptor(pdb_file_name)
+        #                     self.oe_scorer = MultiScorerFromReceptor(recept)
+        #                     self.voxelcache[pdb_file_name] = (self.voxelizer, self.oe_scorer)
+        #                 except:
+        #                     self.logerror("Error, not change.")
+        #
+        #     self.reset_random_recep()
 
         if many_ligands and self.rligands != None and self.use_random:
             idz = randint(0, len(self.rligands) - 1)
             start_atom = copy.deepcopy(self.rligands[idz])
             self.name = self.names[idz]
-
         elif many_ligands and self.rligands != None:
             start_atom = copy.deepcopy(self.rligands.pop(0))
             self.name = self.names.pop(0)
@@ -341,16 +318,17 @@ class LactamaseDocking(gym.Env):
         if random is not None and float(random) != 0:
             x, y, z, = self.random_space_init_reset.sample().flatten().ravel() * float(random)
             x_theta, y_theta, z_theta = self.random_space_rot_reset.sample().flatten().ravel() * float(random)
+            rot = self.get_rotation_matrix(np.array([x_theta, y_theta, z_theta]))
             self.trans = [x, y, z]
-            random_pos = start_atom.translate(x, y, z)
-            random_pos = random_pos.rotate(theta_x=x_theta, theta_y=y_theta, theta_z=z_theta)
+            self.rot = rot
+            random_pos = self.translate_molecule(start_atom, x, y, z)
+            random_pos = self.rotate_molecule(random_pos, rot)
         else:
             if self.config['ref_ligand_move'] is not None:
                 self.trans = self.config['ref_ligand_move']
             else:
                 self.trans = [0, 0, 0]
-
-            random_pos = start_atom.translate(*self.trans)
+            random_pos = self.translate_molecule(start_atom, *self.trans)
 
         self.cur_atom = random_pos
         self.last_score = self.oe_score_combine(self.oe_scorer(self.cur_atom.toPDB()))
@@ -359,6 +337,8 @@ class LactamaseDocking(gym.Env):
         self.last_reward = 0
         self.next_exit = False
         self.decay_v = 1.0
+
+        self.logmessage("Reset ligand", self.trans, self.rot)
         return self.get_obs()
 
     def get_obs(self, quantity='all'):
@@ -391,6 +371,7 @@ class LactamaseDocking(gym.Env):
 
             receptor = oechem.OEGraphMol()
             s = oedocking.OEMakeReceptor(receptor, proteinStructure, box)
+            self.logmessage("make_receptor bool", s)
             oedocking.OEWriteReceptorFile(receptor, check_oeb)
             return receptor
 
@@ -482,3 +463,15 @@ class LactamaseDocking(gym.Env):
         for i in range(len(self.rligands)):
             self.rligands[i] = self.reset_ligand(LigandPDB.parse(self.rligands[i]))
         assert (len(self.rligands) == len(self.names))
+
+    def rotate_molecule(self, mol, *args, **kwargs):
+        if not self.config['action_space_r_stop']:
+            return mol.rotateM(*args, **kwargs)
+        else:
+            return mol
+
+    def translate_molecule(self, mol, *args, **kwargs):
+        if not self.config['action_space_d_stop']:
+            return mol.translate(*args, **kwargs)
+        else:
+            return mol

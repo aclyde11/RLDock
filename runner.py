@@ -104,15 +104,15 @@ if __name__ == '__main__':
     get_dock_marks = []
 
     workers = RolloutWorker(env_creator, ppo.PPOTFPolicy, env_config=envconf, policy_config=d)
-    with open(checkpoint, 'rb') as c:
-        c = c.read()
-        c = pickle.loads(c)
-        print(list(c.keys()))
-        workers.restore(c['worker'])
+    # with open(checkpoint, 'rb') as c:
+    #     c = c.read()
+    #     c = pickle.loads(c)
+    #     print(list(c.keys()))
+    #     workers.restore(c['worker'])
     fp_path = "/Users/austin/PycharmProjects/RLDock/"
     with open("log.pml", 'w') as fp:
         with open("test.pml", 'w') as f:
-            for j in range(3):
+            for j in range(1):
                 rs = workers.sample()
                 print(rs)
                 print(list(rs.keys()))

@@ -161,7 +161,7 @@ class Scorer:
         ligand_name = oechem.oemolistream()
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
-        return self.score.ScoreLigand(ligand)
+        return [self.score.ScoreLigand(ligand)]
 
 
 '''
