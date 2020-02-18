@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
-checkpoint = "/Users/austin/checkpoint_341/checkpoint-341"
+checkpoint = "/Users/austin/checkpoint_1491/checkpoint-1491"
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)
@@ -41,9 +41,9 @@ if __name__ == '__main__':
     d = {
         "model": {
             "custom_model": "rnn",
-            "max_seq_len": 30,
+            "max_seq_len": 24,
         },
-        'gamma': 0.9,
+        'gamma' : 0.9,
         # Should use a critic as a baseline (otherwise don't use value baseline;
         # required for using GAE).
         "use_critic": False,
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         # The GAE(lambda) parameter.
         "lambda": 1.0,
         # Initial coefficient for KL divergence.
-        "kl_coeff": 0.6,
+        "kl_coeff": 0.3,
         # Size of batches collected from each worker.
         "sample_batch_size": 50,
         # Number of timesteps collected for each SGD round. This defines the size
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
         # execute per train batch).
-        "num_sgd_iter": 5,
+        "num_sgd_iter": 8,
         # Stepsize of SGD.
         "lr": 8e-5,
         # Learning rate schedule.
@@ -77,13 +77,13 @@ if __name__ == '__main__':
         "vf_share_layers": True,
         # Coefficient of the value function loss. IMPORTANT: you must tune this if
         # you set vf_share_layers: True.
-        "vf_loss_coeff": 5e-2,
+        "vf_loss_coeff": 0.1,
         # Coefficient of the entropy regularizer.
-        "entropy_coeff": 0.02,
+        "entropy_coeff": 0.01,
         # Decay schedule for the entropy regularizer.
         "entropy_coeff_schedule": None,
         # PPO clip parameter.
-        "clip_param": 0.3,
+        "clip_param": 0.1,
         # Clip param for the value function. Note that this is sensitive to the
         # scale of the rewards. If your expected V is large, increase this.
         "vf_clip_param": 40.0,
@@ -91,11 +91,11 @@ if __name__ == '__main__':
         "grad_clip": 40.0,
         # Target value for KL divergence.
         "kl_target": 0.01,
-        'env_config': envconf,
+        'env_config' : envconf,
         "num_gpus": 0,
-        "num_workers": 1,
-        'batch_mode': 'complete_episodes',
-        'horizon': 50
+        "num_workers" : 1,
+        'batch_mode' : 'complete_episodes',
+        'horizon' : 50
     }
 
     ppo_config = ppo.DEFAULT_CONFIG
