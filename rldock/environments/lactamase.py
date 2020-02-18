@@ -1,16 +1,18 @@
 import copy
+import glob
+import math
+from random import randint
 
 import gym
 import numpy as np
 from gym import spaces
-import random
-from random import randint
-from rldock.environments.LPDB import LigandPDB
-from rldock.environments.utils import MultiScorerFromBox, MultiScorerFromReceptor, MultiScorer, Voxelizer, l2_action, MinMax, ScorerFromReceptor, Scorer
-import glob
-import math
 from scipy.spatial.transform import Rotation as R
-# using 6DPT pdb from Lyu et al. (2019, nature)
+
+from rldock.environments.LPDB import LigandPDB
+from rldock.environments.utils import MultiScorerFromReceptor, Voxelizer, l2_action, \
+    MinMax, ScorerFromReceptor, Scorer
+
+
 class LactamaseDocking(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -48,8 +50,6 @@ class LactamaseDocking(gym.Env):
                                                  dtype=np.float32,
                                                  shape=(3, 1))
 
-
-
         self.voxelcache = {}
         self.use_random = True
 
@@ -58,7 +58,8 @@ class LactamaseDocking(gym.Env):
                 [(config['action_space_d'][i] / (config['K_trans'] - 1)) for i in range(3)]
                 + [config['action_space_r'][i] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
             # self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
-            self.action_space = spaces.Tuple([spaces.Discrete(config['K_trans'])] * 3 + [spaces.Discrete(config['K_theta'])] * 3)
+            self.action_space = spaces.Tuple(
+                [spaces.Discrete(config['K_trans'])] * 3 + [spaces.Discrete(config['K_theta'])] * 3)
 
         else:
             lows = -1 * np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
@@ -67,15 +68,16 @@ class LactamaseDocking(gym.Env):
                                            high=highs,
                                            dtype=np.float32)
 
-        self.observation_space = spaces.Tuple([spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32), spaces.Box(low=-np.inf, high=np.inf, shape=[2], dtype=np.float32)])
+        self.observation_space = spaces.Tuple([spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32),
+                                               spaces.Box(low=-np.inf, high=np.inf, shape=[2], dtype=np.float32)])
 
         self.voxelizer = Voxelizer(config['protein_wo_ligand'], config)
         if self.config['oe_box'] is None:
-            self.oe_scorer = ScorerFromReceptor(self.make_receptor(self.config['protein_wo_ligand'], use_cache=config['use_cache_voxels']))
+            self.oe_scorer = ScorerFromReceptor(
+                self.make_receptor(self.config['protein_wo_ligand'], use_cache=config['use_cache_voxels']))
         else:
             self.logmessage("Found OE BOx for recetpor")
             self.oe_scorer = Scorer(config['oe_box'])
-
 
         # self.minmaxs = [MinMax(-278, -8.45), MinMax(-1.3, 306.15), MinMax(-17.52, 161.49), MinMax(-2, 25.3)]
         self.minmaxs = [MinMax()]
@@ -92,8 +94,8 @@ class LactamaseDocking(gym.Env):
 
         self.cur_atom = copy.deepcopy(self.atom_center)
         self.trans = [0, 0, 0]
-        self.rot   = [0, 0, 0]
-        self.rot   = [0, 0, 0]
+        self.rot = [0, 0, 0]
+        self.rot = [0, 0, 0]
         self.steps = 0
         self.last_score = 0
         self.cur_reward_sum = 0
@@ -111,7 +113,6 @@ class LactamaseDocking(gym.Env):
         #     self.logmessage("Making ordering....")
         #     self.logmessage(listings[0], len(listings))
         #     self.ordered_recept_voxels = [listings[i] for i in ordering]
-
 
     def reset_ligand(self, newlig):
         """
@@ -189,13 +190,13 @@ class LactamaseDocking(gym.Env):
         obs = self.get_obs()
 
         w1 = min(0, -1 * self.config['improve_weight'] * improve)
-        w2 = -1 * self.config['l2_decay'] *  l2_action(action, self.steps)
+        w2 = -1 * self.config['l2_decay'] * l2_action(action, self.steps)
         w3 = -1 * self.config['overlap_weight'] * self.get_penalty_from_overlap(obs)
         w4 = -1 * self.config['score_weight'] * oe_score
-        reward = w1  + w4  + w2 * + w3
+        reward = w1 + w4 + w2 * + w3
 
         if self.config['reward_ramp'] is not None:
-            ramp = self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35)/20))
+            ramp = self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35) / 20))
             reward = reward * ramp
         else:
             ramp = None
@@ -205,16 +206,16 @@ class LactamaseDocking(gym.Env):
             self.logmessage("final reset value, replaces reward", reward)
 
         self.logmessage(
-            {"reward" : reward,
-             "ramp" : ramp,
-             "w1" : w1,
+            {"reward": reward,
+             "ramp": ramp,
+             "w1": w1,
              "w2": w2,
              "w3": w3,
              "w4": w4,
-             'cur_step' : self.steps,
-             'oe_score' : oe_score,
-             'trans' : self.trans,
-             'reset' : reset})
+             'cur_step': self.steps,
+             'oe_score': oe_score,
+             'trans': self.trans,
+             'reset': reset})
 
         self.last_reward = reward
         self.cur_reward_sum += reward
@@ -222,22 +223,23 @@ class LactamaseDocking(gym.Env):
         if self.config['movie_mode']:
             self.movie_step(self.steps)
 
-        assert(not np.any(np.isnan(reward)))
-        assert(not np.any(np.isnan(obs[0])))
-        assert(not np.any(np.isnan(obs[1])))
+        assert (not np.any(np.isnan(reward)))
+        assert (not np.any(np.isnan(obs[0])))
+        assert (not np.any(np.isnan(obs[1])))
 
         return obs, \
                reward, \
                reset, \
-               {'atom' : self.cur_atom.toPDB(),
-                'protein' : self.receptor_refereence_file_name}
+               {'atom': self.cur_atom.toPDB(),
+                'protein': self.receptor_refereence_file_name}
 
     def decide_reset(self, score):
-        return (self.steps >= self.config['max_steps']) 
+        return (self.steps >= self.config['max_steps'])
 
     def get_state_vector(self):
         max_steps = self.steps / self.config['max_steps']
-        return np.nan_to_num(np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32), posinf=100, neginf=-100, nan=-100)
+        return np.nan_to_num(np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32),
+                             posinf=100, neginf=-100, nan=-100)
 
     def logmessage(self, *args, **kwargs):
         if self.config['debug']:
@@ -345,7 +347,7 @@ class LactamaseDocking(gym.Env):
         x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
         oe_score = self.oe_scorer(self.cur_atom.toPDB())
         oe_score = self.oe_score_combine(oe_score)
-        return (x,np.array([0.0, self.steps]))
+        return (x, np.array([0.0, self.steps]))
 
     def make_receptor(self, pdb, use_cache=True):
         from openeye import oedocking, oechem
@@ -377,9 +379,7 @@ class LactamaseDocking(gym.Env):
 
     def render(self, mode='human'):
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import pyplot as plt
-        from matplotlib.figure import Figure
 
         obs = (self.get_obs(quantity='ligand')[:, :, :, -1]).squeeze()
         obs1 = (self.get_obs(quantity='protein')[:, :, :, -1]).squeeze()

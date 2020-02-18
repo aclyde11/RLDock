@@ -22,7 +22,9 @@ def get_args():
     parser.add_argument('-c', type=str, required=True)
     return parser.parse_args()
 
+
 checkpoint = "/Users/austin/checkpoint_1491/checkpoint-1491"
+
 
 def env_creator(env_config):
     return LactamaseDocking(env_config)
@@ -43,7 +45,7 @@ if __name__ == '__main__':
             "custom_model": "rnn",
             "max_seq_len": 24,
         },
-        'gamma' : 0.9,
+        'gamma': 0.9,
         # Should use a critic as a baseline (otherwise don't use value baseline;
         # required for using GAE).
         "use_critic": False,
@@ -91,11 +93,11 @@ if __name__ == '__main__':
         "grad_clip": 40.0,
         # Target value for KL divergence.
         "kl_target": 0.01,
-        'env_config' : envconf,
+        'env_config': envconf,
         "num_gpus": 0,
-        "num_workers" : 1,
-        'batch_mode' : 'complete_episodes',
-        'horizon' : 50
+        "num_workers": 1,
+        'batch_mode': 'complete_episodes',
+        'horizon': 50
     }
 
     ppo_config = ppo.DEFAULT_CONFIG
@@ -119,7 +121,7 @@ if __name__ == '__main__':
                 ls = rs['actions'].shape[0]
                 for i in range(ls):
                     i += j * ls
-                    ligand_pdb = rs['infos'][i - j *ls]['atom']
+                    ligand_pdb = rs['infos'][i - j * ls]['atom']
                     protein_pdb_link = rs['infos'][i - j * ls]['protein']
 
                     with open(fp_path + 'pdbs_traj/test' + str(i) + '.pdb', 'w') as f:

@@ -249,18 +249,18 @@ if __name__ == "__main__":
         # Initial coefficient for KL divergence.
         "kl_coeff": 0.3,
         # Size of batches collected from each worker.
-        "sample_batch_size": 50,
+        "sample_batch_size": 100,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 126,
+        "train_batch_size": 1000,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
-        "sgd_minibatch_size": 64,
+        "sgd_minibatch_size": 50,
         # Whether to shuffle sequences in the batch when training (recommended).
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
         # execute per train batch).
-        "num_sgd_iter": 8,
+        "num_sgd_iter": 5,
         # Stepsize of SGD.
         "lr": 8e-5,
         # Learning rate schedule.
@@ -288,7 +288,8 @@ if __name__ == "__main__":
         "num_gpus": args.ngpu,
         "num_workers" : args.ncpu,
         'batch_mode' : 'complete_episodes',
-        'horizon' : 50
+        'horizon' : 50,
+        'reuse_actors' : True
     }
     ppo_config = ppo.DEFAULT_CONFIG
     ppo_config.update(d)
