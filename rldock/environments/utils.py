@@ -252,5 +252,4 @@ class Voxelizer:
             x = lig_vox.transpose().reshape([1, nchannels, lig_N[0], lig_N[1], lig_N[2]])
         else:
             x = self.prot_vox_t
-
         return np.transpose(np.concatenate([x], axis=1), (0, 2, 3, 4, 1))

@@ -19,8 +19,8 @@ config = {
     'bp_centers': [30.748, 0.328, 23.421],
     'bp_min': [22.748, -7.672, 13.421],
     'bp_max': [38.748, 8.328, 31.421],
-    'voxelsize': 0.25,
-    'output_size': (64, 64, 64, 8),  # (39,40,42,8),
+    'voxelsize': 0.33,
+    'output_size': (49, 49, 49, 8),  # (39,40,42,8),
     'max_steps': 50,
     'decay': 0.98,  # ^25 = 0.001,
     'voxel_method': 'C',
@@ -48,3 +48,5 @@ config = {
     'ref_ligand_move': None,  # move GPCR ligand out of reference pocket
     'movie_mode': False
 }
+config['bp_min'] = [config['bp_centers'][i] - int(config['bp_dimension'][i] / 2) for i in range(3)]
+config['bp_max'] = [config['bp_centers'][i] + int(config['bp_dimension'][i] / 2) for i in range(3)]

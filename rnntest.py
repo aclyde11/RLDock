@@ -35,8 +35,8 @@ class MyKerasRNN(RecurrentTFModelV2):
                  num_outputs,
                  model_config,
                  name,
-                 hiddens_size=512,
-                 cell_size=512):
+                 hiddens_size=384,
+                 cell_size=384):
         super(MyKerasRNN, self).__init__(obs_space, action_space, num_outputs,
                                          model_config, name)
         self.cell_size = cell_size
@@ -52,24 +52,20 @@ class MyKerasRNN(RecurrentTFModelV2):
 
         h = tf.keras.layers.TimeDistributed(
             tf.keras.layers.Conv3D(filters=64, kernel_size=6, padding='valid', name='notconv1'))(h)
-        h = tf.keras.layers.BatchNormalization()(h)
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(64, 8, padding='valid', name='conv3d_2'))(h)
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.MaxPooling3D(pool_size=(2, 2, 2),
                                                                          strides=None,
                                                                          padding='valid'))(h)
-        h = tf.keras.layers.TimeDistributed(
-            tf.keras.layers.Conv3D(filters=64, kernel_size=3, padding='valid', name='notconv12'))(h)
-        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(filters=64, kernel_size=3, padding='valid', name='notconv12'))(h)
+        h = tf.keras.layers.ReLU()(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 8, padding='valid', name='conv3d_22'))(h)
-        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.ReLU()(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 8, padding='valid', name='conv3d_22'))(h)
-        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.ReLU()(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 3, padding='valid', name='conv3d_22'))(h)
-        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
-        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 2, padding='valid', name='conv3d_22'))(h)
-        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.ReLU()(h)
 
         h = tf.keras.layers.Reshape([-1, 7 * 7 * 7 * 32])(h)
 
