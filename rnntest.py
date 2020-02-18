@@ -260,9 +260,9 @@ if __name__ == "__main__":
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
         # execute per train batch).
-        "num_sgd_iter": 5,
+        "num_sgd_iter": 15,
         # Stepsize of SGD.
-        "lr": 8e-5,
+        "lr": 1e-5,
         # Learning rate schedule.
         "lr_schedule": None,
         # Share layers for value function. If you set this to True, it's important
