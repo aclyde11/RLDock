@@ -234,7 +234,7 @@ if __name__ == "__main__":
     d = {
         "model": {
             "custom_model": "rnn",
-            "max_seq_len": 24,
+            "max_seq_len": 16,
         },
         'gamma' : 0.9,
         # Should use a critic as a baseline (otherwise don't use value baseline;
@@ -249,10 +249,10 @@ if __name__ == "__main__":
         # Initial coefficient for KL divergence.
         "kl_coeff": 0.3,
         # Size of batches collected from each worker.
-        "sample_batch_size": 50,
+        "sample_batch_size": 25,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 400,
+        "train_batch_size": 200,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
         "sgd_minibatch_size": 16,
@@ -287,7 +287,7 @@ if __name__ == "__main__":
         'env_config' : envconf,
         "num_gpus": args.ngpu,
         "num_workers" : args.ncpu,
-        'batch_mode' : 'complete_episodes',
+        # 'batch_mode' : 'complete_episodes',
         'horizon' : 50,
         'reuse_actors' : True
     }
