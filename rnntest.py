@@ -250,13 +250,13 @@ if __name__ == "__main__":
         # Initial coefficient for KL divergence.
         "kl_coeff": 0.3,
         # Size of batches collected from each worker.
-        "sample_batch_size": 50,
+        "sample_batch_size": 100,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 250,
+        "train_batch_size": 500,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
-        "sgd_minibatch_size": 50,
+        "sgd_minibatch_size": 100,
         # Whether to shuffle sequences in the batch when training (recommended).
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
@@ -271,9 +271,9 @@ if __name__ == "__main__":
         "vf_share_layers": True,
         # Coefficient of the value function loss. IMPORTANT: you must tune this if
         # you set vf_share_layers: True.
-        "vf_loss_coeff": 0.1,
+        "vf_loss_coeff": 0.5,
         # Coefficient of the entropy regularizer.
-        "entropy_coeff": 0.01,
+        "entropy_coeff": 0.001,
         # Decay schedule for the entropy regularizer.
         "entropy_coeff_schedule": None,
         # PPO clip parameter.
