@@ -51,7 +51,7 @@ class MyKerasRNN(RecurrentTFModelV2):
         h = tf.keras.layers.Reshape([-1] + list(envconf['output_size']))(input_layer)
 
         h = tf.keras.layers.TimeDistributed(
-            tf.keras.layers.Conv3D(filters=64, kernel_size=6, padding='valid', name='notconv1'))(h)
+            tf.keras.layers.Conv3D(filters=64, kernel_size=8, padding='valid', name='notconv1'))(h)
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(64, 8, padding='valid', name='conv3d_2'))(h)
         h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
@@ -60,14 +60,19 @@ class MyKerasRNN(RecurrentTFModelV2):
                                                                          padding='valid'))(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(filters=64, kernel_size=3, padding='valid', name='notconv12'))(h)
         h = tf.keras.layers.ReLU()(h)
-        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 8, padding='valid', name='conv3d_22'))(h)
-        h = tf.keras.layers.ReLU()(h)
-        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 8, padding='valid', name='conv3d_22'))(h)
+        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 3, padding='valid', name='conv3d_22'))(h)
         h = tf.keras.layers.ReLU()(h)
         h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 3, padding='valid', name='conv3d_22'))(h)
         h = tf.keras.layers.ReLU()(h)
+        h = tf.keras.layers.TimeDistributed(tf.keras.layers.MaxPooling3D(pool_size=(2, 2, 2),
+                                                                         strides=None,
+                                                                         padding='valid'))(h)
+        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(32, 2, padding='valid', name='conv3d_22'))(h)
+        h = tf.keras.layers.ReLU()(h)
+        h = tf.keras.layers.TimeDistributed(tf.keras.layers.Conv3D(24, 2, padding='valid', name='conv3d_22'))(h)
+        h = tf.keras.layers.ReLU()(h)
 
-        h = tf.keras.layers.Reshape([-1, 7 * 7 * 7 * 32])(h)
+        h = tf.keras.layers.Reshape([-1, 3 * 3 * 3 * 24])(h)
 
         state_vec = tf.keras.layers.Input(shape=(None,2), name='state_vec_input')
         h2 = tf.keras.layers.Dense(16, activation=tf.nn.relu, name='st1')(state_vec)
@@ -248,10 +253,10 @@ if __name__ == "__main__":
         "sample_batch_size": 50,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 100,
+        "train_batch_size": 250,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
-        "sgd_minibatch_size": 16,
+        "sgd_minibatch_size": 50,
         # Whether to shuffle sequences in the batch when training (recommended).
         "shuffle_sequences": False,
         # Number of SGD iterations in each outer loop (i.e., number of epochs to
