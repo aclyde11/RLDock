@@ -196,7 +196,7 @@ class LactamaseDocking(gym.Env):
         reward = w1 + w4 + w2 * + w3
 
         if self.config['reward_ramp'] is not None:
-            ramp = self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35) / 20))
+            ramp = min(1.0, self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35) / 20)))
             reward = reward * ramp
         else:
             ramp = None
