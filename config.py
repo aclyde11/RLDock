@@ -8,7 +8,7 @@ config = {
     'K_trans': 4,
     'K_theta': 4,
     'normalize': True,
-    'action_space_d': (0.25, 0.25, 0.25),
+    'action_space_d': (0.33, 0.33, 0.33),
     'action_space_r': (math.pi * 2 * 0.05, math.pi * 2 * 0.05, math.pi * 2 * 0.05),
     'action_space_r_stop': True,
     'action_space_d_stop': False,

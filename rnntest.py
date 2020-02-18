@@ -248,7 +248,7 @@ if __name__ == "__main__":
         # The GAE(lambda) parameter.
         "lambda": 1.0,
         # Initial coefficient for KL divergence.
-        "kl_coeff": 0.3,
+        "kl_coeff": 0.2,
         # Size of batches collected from each worker.
         "sample_batch_size": 100,
         # Number of timesteps collected for each SGD round. This defines the size
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         # execute per train batch).
         "num_sgd_iter": 15,
         # Stepsize of SGD.
-        "lr": 8e-5,
+        "lr": 5e-5,
         # Learning rate schedule.
         "lr_schedule": None,
         # Share layers for value function. If you set this to True, it's important
@@ -271,9 +271,9 @@ if __name__ == "__main__":
         "vf_share_layers": True,
         # Coefficient of the value function loss. IMPORTANT: you must tune this if
         # you set vf_share_layers: True.
-        "vf_loss_coeff": 0.5,
+        "vf_loss_coeff": 0.1,
         # Coefficient of the entropy regularizer.
-        "entropy_coeff": 0.0001,
+        "entropy_coeff": 0.01,
         # Decay schedule for the entropy regularizer.
         "entropy_coeff_schedule": None,
         # PPO clip parameter.
@@ -282,7 +282,7 @@ if __name__ == "__main__":
         # scale of the rewards. If your expected V is large, increase this.
         "vf_clip_param": 40.0,
         # If specified, clip the global norm of gradients by this amount.
-        "grad_clip": 40.0,
+        "grad_clip": 20.0,
         # Target value for KL divergence.
         "kl_target": 0.01,
         'env_config' : envconf,

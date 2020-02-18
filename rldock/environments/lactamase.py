@@ -227,6 +227,11 @@ class LactamaseDocking(gym.Env):
         assert (not np.any(np.isnan(obs[0])))
         assert (not np.any(np.isnan(obs[1])))
 
+        if reward > 10:
+            reward = 10
+        elif reward < -10:
+            reward = -10
+
         return obs, \
                reward, \
                reset, \
