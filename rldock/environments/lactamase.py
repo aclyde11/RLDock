@@ -155,9 +155,14 @@ class LactamaseDocking(gym.Env):
         """
         return np.sum(obs[0][:, :, :, -1] >= 2)
 
-    def oe_score_combine(self, oescores, average=True):
-        score = oescores[0]
-        return score
+    def oe_score_combine(self, oescores):
+        if isinstance(oescores, dict):
+            sum = 0
+            for k, score in oescores.items():
+                sum += score
+            return sum / len(oescores)
+        else:
+            return oescores
 
     def get_rotation_matrix(self, rot):
         return R.from_euler('xyz', rot, degrees=False).as_matrix()
@@ -165,8 +170,15 @@ class LactamaseDocking(gym.Env):
     def get_rotation(self, rot):
         return rot
 
-    def get_oe_score(self):
+    def get_raw_oe_score(self, name='all'):
         oe_score = self.oe_scorer(self.cur_atom.toPDB())
+        if name == 'all':
+            return oe_score
+        else:
+            return oe_score[name]
+
+    def get_oe_score(self, name='all'):
+        oe_score = self.get_raw_oe_score(name)
         oe_score = self.oe_score_combine(oe_score)
         if oe_score > 25:
             oe_score = -1
@@ -191,7 +203,7 @@ class LactamaseDocking(gym.Env):
         self.rot = np.matmul(self.rot, rotM)
         self.steps += 1
 
-        oe_score = self.get_oe_score()
+        oe_score = self.get_oe_score(name='Chemgauss4')
         reset = self.decide_reset(oe_score)
         improve = oe_score - self.last_score
         self.last_score = oe_score
@@ -358,8 +370,6 @@ class LactamaseDocking(gym.Env):
 
     def get_obs(self, quantity='all'):
         x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
-        oe_score = self.oe_scorer(self.cur_atom.toPDB())
-        oe_score = self.oe_score_combine(oe_score)
         return (x, np.array([0.0, self.steps]))
 
     def make_receptor(self, pdb, use_cache=True):

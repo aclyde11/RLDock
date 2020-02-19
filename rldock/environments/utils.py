@@ -44,13 +44,13 @@ from rldock.environments import LPDB
 class MultiScorerFromReceptor:
     def __init__(self, receptor):
         self.receptor = oechem.OEGraphMol()
-        self.scorers = [oedocking.OEScore(oedocking.OEScoreType_Shapegauss),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemscore),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemgauss3),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemgauss4),
-                        ]
-
-        for score in self.scorers:
+        self.scorers = {'Shapegauss': oedocking.OEScore(oedocking.OEScoreType_Shapegauss),
+                        'Chemscore': oedocking.OEScore(oedocking.OEScoreType_Chemscore),
+                        'Chemgauss': oedocking.OEScore(oedocking.OEScoreType_Chemgauss),
+                        'Chemgauss3': oedocking.OEScore(oedocking.OEScoreType_Chemgauss3),
+                        'Chemgauss4': oedocking.OEScore(oedocking.OEScoreType_Chemgauss4),
+                        }
+        for _, score in self.scorers.items():
             score.Initialize(receptor)
 
     def __call__(self, item: str):
@@ -59,7 +59,7 @@ class MultiScorerFromReceptor:
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
 
-        return [scorer.ScoreLigand(ligand) for scorer in self.scorers]
+        return {k : scorer.ScoreLigand(ligand) for k, scorer in self.scorers.items()}
 
 
 class ScorerFromReceptor:
@@ -74,17 +74,18 @@ class ScorerFromReceptor:
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
 
-        return [self.scorers.ScoreLigand(ligand)]
+        return {'Chemgauss4' : self.scorers.ScoreLigand(ligand)}
 
 
 class MultiScorerFromBox:
     def __init__(self, pdb_file, xmax, ymax, zmax, xmin, ymin, zmin):
         self.receptor = oechem.OEGraphMol()
-        self.scorers = [oedocking.OEScore(oedocking.OEScoreType_Shapegauss),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemscore),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemgauss3),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemgauss4),
-                        ]
+        self.scorers = {'Shapegauss' : oedocking.OEScore(oedocking.OEScoreType_Shapegauss),
+                        'Chemscore'  : oedocking.OEScore(oedocking.OEScoreType_Chemscore),
+                        'Chemgauss'  : oedocking.OEScore(oedocking.OEScoreType_Chemgauss),
+                        'Chemgauss3' : oedocking.OEScore(oedocking.OEScoreType_Chemgauss3),
+                        'Chemgauss4' : oedocking.OEScore(oedocking.OEScoreType_Chemgauss4),
+                        }
 
         proteinStructure = oechem.OEGraphMol()
         ifs = oechem.oemolistream(pdb_file)
@@ -95,7 +96,7 @@ class MultiScorerFromBox:
 
         receptor = oechem.OEGraphMol()
         s = oedocking.OEMakeReceptor(receptor, proteinStructure, box)
-        for score in self.scorers:
+        for _, score in self.scorers.items():
             assert (s != False)
             score.Initialize(receptor)
 
@@ -105,7 +106,7 @@ class MultiScorerFromBox:
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
 
-        return [scorer.ScoreLigand(ligand) for scorer in self.scorers]
+        return {k : scorer.ScoreLigand(ligand) for k, scorer in self.scorers.items()}
 
 
 class ScorerFromBox:
@@ -130,19 +131,20 @@ class ScorerFromBox:
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
 
-        return [self.scorers.ScoreLigand(ligand)]
+        return {'Chemgauss4' : self.scorers.ScoreLigand(ligand)}
 
 
 class MultiScorer:
     def __init__(self, pdb_file):
         self.receptor = oechem.OEGraphMol()
-        self.scorers = [oedocking.OEScore(oedocking.OEScoreType_Shapegauss),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemscore),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemgauss3),
-                        oedocking.OEScore(oedocking.OEScoreType_Chemgauss4),
-                        ]
+        self.scorers = {'Shapegauss': oedocking.OEScore(oedocking.OEScoreType_Shapegauss),
+                        'Chemscore': oedocking.OEScore(oedocking.OEScoreType_Chemscore),
+                        'Chemgauss': oedocking.OEScore(oedocking.OEScoreType_Chemgauss),
+                        'Chemgauss3': oedocking.OEScore(oedocking.OEScoreType_Chemgauss3),
+                        'Chemgauss4': oedocking.OEScore(oedocking.OEScoreType_Chemgauss4),
+                        }
         oedocking.OEReadReceptorFile(self.receptor, pdb_file)
-        for score in self.scorers:
+        for _, score in self.scorers.items():
             score.Initialize(self.receptor)
 
     def __call__(self, item: str):
@@ -151,7 +153,7 @@ class MultiScorer:
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
 
-        return [scorer.ScoreLigand(ligand) for scorer in self.scorers]
+        return {k : scorer.ScoreLigand(ligand) for k, scorer in self.scorers.items()}
 
 
 class Scorer:
@@ -167,7 +169,7 @@ class Scorer:
         ligand_name = oechem.oemolistream()
         ligand_name.openstring(item)
         oechem.OEReadPDBFile(ligand_name, ligand)
-        return [self.score.ScoreLigand(ligand)]
+        return {'Chemgauss4' : self.score.ScoreLigand(ligand)}
 
 
 '''

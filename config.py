@@ -3,6 +3,9 @@ import math
 
 path = os.path.dirname(os.path.abspath(__file__)) + "/resources"
 # path = ""
+
+bp_centers = [  30.784,   7.100,  31.738]
+bp_dim = [16, 16, 16]
 config = {
     'discrete': False,
     'K_trans': 4,
@@ -14,11 +17,11 @@ config = {
     'action_space_d_stop': False,
     'protein_wo_ligand': path + '/6dpz/6pdz_wo_ligand.pdb',
     'ligand': path + '/6dpz/6dpz_ligand.pdb',
-    'oe_box': path + "/6dpz/oe_box_6dpz.oeb",
-    'bp_dimension': [16, 16, 16],
-    'bp_centers': [30.748, 0.328, 23.421],
-    'bp_min': [22.748, -7.672, 13.421],
-    'bp_max': [38.748, 8.328, 31.421],
+    'oe_box': None, # path + "/6dpz/oe_box_6dpz.oeb",
+    'bp_dimension': bp_dim,
+    'bp_centers': bp_centers,
+    'bp_min': [bp_centers[i] - int(bp_dim[i] / 2) for i in range(3)],
+    'bp_max': [bp_centers[i] + int(bp_dim[i] / 2) for i in range(3)],
     'voxelsize': 0.33,
     'output_size': (49, 49, 49, 8),  # (39,40,42,8),
     'max_steps': 50,
@@ -32,9 +35,10 @@ config = {
     'l2_decay': 0.000001,
     'improve_weight': 0.1,
     'score_weight': 0.01,
+    'oe_score' : "Chemgauss4",
 
     ## Ligand and Protein selection features
-    'random': 0.0,  # randomly place ligand around protein
+    'random': 0.2,  # randomly place ligand around protein
     'many_ligands': False,  # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval',
@@ -45,8 +49,6 @@ config = {
     'cache': 'cache/',
     'use_cache_voxels': False,
 
-    'ref_ligand_move': None,  # move GPCR ligand out of reference pocket
+    'ref_ligand_move': [0,0,0],  # move GPCR ligand out of reference pocket
     'movie_mode': False
 }
-config['bp_min'] = [config['bp_centers'][i] - int(config['bp_dimension'][i] / 2) for i in range(3)]
-config['bp_max'] = [config['bp_centers'][i] + int(config['bp_dimension'][i] / 2) for i in range(3)]
