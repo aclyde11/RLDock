@@ -165,6 +165,15 @@ class LactamaseDocking(gym.Env):
     def get_rotation(self, rot):
         return rot
 
+    def get_oe_score(self):
+        oe_score = self.oe_scorer(self.cur_atom.toPDB())
+        oe_score = self.oe_score_combine(oe_score)
+        if oe_score > 25:
+            oe_score = -1
+        else:
+            oe_score = (oe_score - 25) * -1
+        return oe_score
+
     def step(self, action):
         if np.any(np.isnan(action)):
             self.logerror("ERROR, nan action from get action", action)
@@ -182,17 +191,16 @@ class LactamaseDocking(gym.Env):
         self.rot = np.matmul(self.rot, rotM)
         self.steps += 1
 
-        oe_score = self.oe_scorer(self.cur_atom.toPDB())
-        oe_score = self.oe_score_combine(oe_score)
+        oe_score = self.get_oe_score()
         reset = self.decide_reset(oe_score)
         improve = oe_score - self.last_score
         self.last_score = oe_score
         obs = self.get_obs()
 
-        w1 = min(0, -1 * self.config['improve_weight'] * improve)
+        w1 = min(0, self.config['improve_weight'] * improve)
         w2 = -1 * self.config['l2_decay'] * l2_action(action, self.steps)
         w3 = -1 * self.config['overlap_weight'] * self.get_penalty_from_overlap(obs)
-        w4 = -1 * self.config['score_weight'] * oe_score
+        w4 = self.config['score_weight'] * oe_score
         reward = w1 + w4 + w2 * + w3
 
         if self.config['reward_ramp'] is not None:
@@ -202,7 +210,7 @@ class LactamaseDocking(gym.Env):
             ramp = None
 
         if reset:
-            reward = oe_score * -1.0
+            reward = oe_score
             self.logmessage("final reset value, replaces reward", reward)
 
         self.logmessage(
