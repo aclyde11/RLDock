@@ -23,7 +23,7 @@ def get_args():
     return parser.parse_args()
 
 
-checkpoint = "/Users/austin/checkpoint_1491/checkpoint-1491"
+checkpoint = "/Users/austin/checkpoint_11/checkpoint-11"
 
 
 def env_creator(env_config):
@@ -106,11 +106,11 @@ if __name__ == '__main__':
     get_dock_marks = []
 
     workers = RolloutWorker(env_creator, ppo.PPOTFPolicy, env_config=envconf, policy_config=d)
-    # with open(checkpoint, 'rb') as c:
-    #     c = c.read()
-    #     c = pickle.loads(c)
-    #     print(list(c.keys()))
-    #     workers.restore(c['worker'])
+    with open(checkpoint, 'rb') as c:
+        c = c.read()
+        c = pickle.loads(c)
+        print(list(c.keys()))
+        workers.restore(c['worker'])
     fp_path = "/Users/austin/PycharmProjects/RLDock/"
     with open("log.pml", 'w') as fp:
         with open("test.pml", 'w') as f:

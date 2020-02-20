@@ -209,7 +209,7 @@ class LactamaseDocking(gym.Env):
         self.last_score = oe_score
         obs = self.get_obs()
 
-        w1 = min(0, self.config['improve_weight'] * improve)
+        w1 = max(0, self.config['improve_weight'] * improve)
         w2 = -1 * self.config['l2_decay'] * l2_action(action, self.steps)
         w3 = -1 * self.config['overlap_weight'] * self.get_penalty_from_overlap(obs)
         w4 = self.config['score_weight'] * oe_score

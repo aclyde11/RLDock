@@ -25,20 +25,20 @@ config = {
     'voxelsize': 0.33,
     'output_size': (49, 49, 49, 8),  # (39,40,42,8),
     'max_steps': 50,
-    'decay': 0.98,  # ^25 = 0.001,
+    'decay': 0.97,  # ^25 = 0.001,
     'voxel_method': 'C',
-    'debug': True,
+    'debug': False,
     'reward_ramp': 1.0,
 
     ## Reward function tuning
-    'overlap_weight': 0.000001,
-    'l2_decay': 0.000001,
-    'improve_weight': 0.1,
+    'overlap_weight': 0.0001,
+    'l2_decay': 0.0001,
+    'improve_weight': 1,
     'score_weight': 0.01,
     'oe_score' : "Chemgauss4",
 
     ## Ligand and Protein selection features
-    'random': 0.2,  # randomly place ligand around protein
+    'random': 0.3,  # randomly place ligand around protein
     'many_ligands': False,  # use many ligands from the random_ligand_folder
     'random_ligand_folder': path + '/rligands',
     'random_ligand_folder_test': path + '/rligands_eval',
