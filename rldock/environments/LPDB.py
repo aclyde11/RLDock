@@ -7,28 +7,35 @@ import scipy
 import scipy.spatial
 import scipy.spatial.transform
 
+
 class JUSTIF(Enum):
     LEFT = 0
     RIGHT = 1
 
-def minN(x,y):
+
+def minN(x, y):
     if x is None:
         return y
     if y is None:
         return x
-    return min(x,y)
-def maxN(x,y):
+    return min(x, y)
+
+
+def maxN(x, y):
     if x is None:
         return y
     if y is None:
         return x
-    return max(x,y)
+    return max(x, y)
+
 
 '''
 For ligands two important blocks. HETATM block which has coordinates and types, connect block.
 
 Connect block save and pass through.
 '''
+
+
 class PDBTransformer:
     def __init__(self, pdb_file):
         pdb_file = list(map(lambda x: x.strip(), open(pdb_file, 'r').readlines()))
@@ -59,7 +66,6 @@ class PDBParseAttribute:
             self.end - self.start + 1)
 
 
-
 class Parser:
     def __init__(self, i):
         self.__item_to_fill = i
@@ -79,7 +85,7 @@ class Parser:
                       not (a[0].startswith('__') or a[0].endswith('__') or a[0].startswith('_'))]
 
         ## sort correct  name.start
-        ids = np.argsort(list(map(lambda  x : x[1].start, attributes)))
+        ids = np.argsort(list(map(lambda x: x[1].start, attributes)))
         attributes = [attributes[i] for i in ids]
 
         i_write = 0
@@ -113,6 +119,7 @@ class LigandAtomParser(Parser):
         self.seg_id = PDBParseAttribute(72, 73, JUSTIF.LEFT, str)
         self.elem_sym = PDBParseAttribute(74, 77, JUSTIF.RIGHT, str)
 
+
 class ConnectRowParser(Parser):
 
     def __init__(self, i):
@@ -123,6 +130,7 @@ class ConnectRowParser(Parser):
         self.bonded1 = PDBParseAttribute(17, 21, JUSTIF.RIGHT, int)
         self.bonded2 = PDBParseAttribute(22, 26, JUSTIF.RIGHT, int)
         self.bonded3 = PDBParseAttribute(27, 31, JUSTIF.RIGHT, int)
+
 
 class ConnectRow:
     type: str
@@ -158,6 +166,7 @@ class ConnectRow:
         atom = cls()
         ConnectRowParser(atom).parse(line)
         return atom
+
 
 class LigandAtom:
     type: str
@@ -222,6 +231,7 @@ class LigandAtom:
 
 class LigandPDB:
     hetatoms: List[LigandAtom]
+
     # connect: List[ConnectRow]
 
     def __init__(self):
@@ -250,7 +260,7 @@ class LigandPDB:
             max_z = maxN(max_z, atom.z_ortho_a)
             min_z = minN(min_z, atom.z_ortho_a)
 
-        return (max_x + min_x) /2, (max_y + min_y) /2, (max_z + min_z) /2
+        return (max_x + min_x) / 2, (max_y + min_y) / 2, (max_z + min_z) / 2
 
     def __translate(self, x, y, z):
         pdb_c = copy.deepcopy(self)
@@ -275,7 +285,6 @@ class LigandPDB:
             atom.set_coords(vec)
         return pdb_c
 
-
     def rotateM(self, rot_mat):
         pdb_c = copy.deepcopy(self)
         c = np.array(pdb_c.get_center()).flatten()
@@ -297,7 +306,7 @@ class LigandPDB:
             if "HETATM" in line:
                 pdb.hetatoms.append(LigandAtom.fromPDBRow(line))
             elif "CONECT" in line:
-                #pdb.connect.append(ConnectRow.fromPDBRow(line))
+                # pdb.connect.append(ConnectRow.fromPDBRow(line))
                 pdb.connect.append(line)
         return pdb
 
@@ -310,8 +319,8 @@ class LigandPDB:
     def dump_coords(self):
         rows = []
         for atom in self.hetatoms:
-            rows.append(" ".join([str(atom.atom_name).strip() ,
-                                  "{:8.3f}".format(atom.x_ortho_a).strip() ,
+            rows.append(" ".join([str(atom.atom_name).strip(),
+                                  "{:8.3f}".format(atom.x_ortho_a).strip(),
                                   "{:8.3f}".format(atom.y_ortho_a).strip(),
                                   "{:8.3f}".format(atom.z_ortho_a).strip()]))
         return "\n".join(rows) + "\n"

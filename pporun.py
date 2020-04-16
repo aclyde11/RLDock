@@ -6,12 +6,15 @@ import tensorflow_probability as tfp
 
 faulthandler.enable(file=sys.stderr, all_threads=True)
 import ray
+from ray.rllib.models.modelv2 import ModelV2
+from ray.rllib.models.tf.recurrent_tf_modelv2 import RecurrentTFModelV2
 from ray.rllib.agents.impala import impala
 from ray.rllib.agents.ppo import ppo
 from ray.rllib.agents.ppo import appo
 from ray.tune.logger import pretty_print
 from ray.rllib.models import ModelCatalog
 from argparse import ArgumentParser
+from ray.tune import register_env
 from ray import tune
 import numpy as np
 from config import config as envconf
@@ -26,6 +29,7 @@ from rldock.environments.lactamase import LactamaseDocking
 from resnet import Resnet3DBuilder
 
 tf = try_import_tf()
+
 
 class Ordinal(TFActionDistribution):
     """Categorical distribution for discrete action spaces."""
@@ -74,7 +78,7 @@ class Ordinal(TFActionDistribution):
 
     @override(TFActionDistribution)
     def _build_sample_op(self):
-        t =  tf.squeeze(tf.multinomial(self.inputs, 1), axis=1)
+        t = tf.squeeze(tf.multinomial(self.inputs, 1), axis=1)
         t = tf.clip_by_value(t, clip_value_min=0, clip_value_max=envconf['K_trans'] - 1)
         return t
 
@@ -87,7 +91,7 @@ class Ordinal(TFActionDistribution):
 class MultiOrdinal(TFActionDistribution):
     """MultiCategorical distribution for MultiDiscrete action spaces."""
 
-    def __init__(self, inputs, model, input_lens=([envconf['K_trans']] * 3 + [envconf['K_theta']]  * 6)):
+    def __init__(self, inputs, model, input_lens=([envconf['K_trans']] * 3 + [envconf['K_theta']] * 6)):
         # skip TFActionDistribution init
         ActionDistribution.__init__(self, inputs, model)
         self.cats = [
@@ -137,6 +141,7 @@ class MultiOrdinal(TFActionDistribution):
     def required_model_output_shape(action_space, model_config):
         return np.sum(action_space.nvec)
 
+
 class MyActionDist(TFActionDistribution):
     def __init__(self, inputs, model):
         mean, log_std = tf.split(inputs, 2, axis=1)
@@ -153,12 +158,12 @@ class MyActionDist(TFActionDistribution):
     @override(ActionDistribution)
     def kl(self, other):
         assert isinstance(other, MyActionDist)
-        t =  tf.reduce_sum(self.dist.kl_divergence(other.dist), reduction_indices=[1])
+        t = tf.reduce_sum(self.dist.kl_divergence(other.dist), reduction_indices=[1])
         return t
 
     @override(ActionDistribution)
     def entropy(self):
-        t =  tf.reduce_sum(self.dist.entropy(), reduction_indices=[1])
+        t = tf.reduce_sum(self.dist.entropy(), reduction_indices=[1])
         return t
 
     @override(TFActionDistribution)
@@ -170,6 +175,111 @@ class MyActionDist(TFActionDistribution):
     @override(ActionDistribution)
     def required_model_output_shape(action_space, model_config):
         return np.prod(action_space.shape) * 2
+
+def __init__(self, *args, **kwargs):
+    super(MyModelClass, self).__init__(*args, **kwargs)
+    cell_size = 256
+
+    # Define input layers
+    input_layer = tf.keras.layers.Input(
+        shape=(None, obs_space.shape[0]))
+    state_in_h = tf.keras.layers.Input(shape=(256, ))
+    state_in_c = tf.keras.layers.Input(shape=(256, ))
+    seq_in = tf.keras.layers.Input(shape=(), dtype=tf.int32)
+
+    # Send to LSTM cell
+    lstm_out, state_h, state_c = tf.keras.layers.LSTM(
+        cell_size, return_sequences=True, return_state=True,
+        name="lstm")(
+            inputs=input_layer,
+            mask=tf.sequence_mask(seq_in),
+            initial_state=[state_in_h, state_in_c])
+    output_layer = tf.keras.layers.Dense(...)(lstm_out)
+
+    # Create the RNN model
+    self.rnn_model = tf.keras.Model(
+        inputs=[input_layer, seq_in, state_in_h, state_in_c],
+        outputs=[output_layer, state_h, state_c])
+    self.register_variables(self.rnn_model.variables)
+    self.rnn_model.summary()
+class MyKerasRNN(RecurrentTFModelV2):
+    def __init__(self,
+                 obs_space,
+                 action_space,
+                 num_outputs,
+                 model_config,
+                 name,
+                 hiddens_size=256):
+        super(MyKerasRNN, self).__init__(obs_space, action_space, num_outputs,
+                                         model_config, name)
+
+        # Define input layers
+        state_in_h = tf.keras.layers.Input(shape=(hiddens_size,), name="h")
+        state_in_c = tf.keras.layers.Input(shape=(hiddens_size,), name="c")
+        seq_in = tf.keras.layers.Input(shape=(), name="seq_in", dtype=tf.int32)
+
+        # Preprocess observation with a hidden layer and send to LSTM cell
+        self.inputs = tf.keras.layers.Input(
+            shape=(26, 27, 28, 8), name="observations")
+        h = tf.keras.layers.Conv3D(filters=32, kernel_size=5, padding='valid', name='notconv1')(self.inputs)
+        h = tf.keras.layers.BatchNormalization()(h)
+        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.Conv3D(64, 3, padding='valid', name='conv3d_2')(h)
+        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.MaxPooling3D(pool_size=(2, 2, 2),
+                                         strides=None,
+                                         padding='valid')(h)
+        h = tf.keras.layers.Conv3D(filters=32, kernel_size=5, padding='valid', name='notconv12')(h)
+        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.Conv3D(32, 3, padding='valid', name='conv3d_22')(h)
+        h = tf.keras.layers.LeakyReLU(alpha=0.1)(h)
+        h = tf.keras.layers.MaxPooling3D(pool_size=(2, 2, 2),
+                                         strides=None,
+                                         padding='valid')(h)
+
+        h = tf.keras.layers.Flatten()(h)
+
+        dense1 = tf.keras.layers.Dense(
+            hiddens_size, activation=tf.nn.relu, name="dense1")(h)
+
+        print(dense1.shape, seq_in.shape, state_in_c.shape, state_in_h.shape)
+        lstm_out, state_h, state_c = tf.keras.layers.LSTM(
+            hiddens_size, return_sequences=True, return_state=True, name="lstm")(
+            inputs=dense1,
+            mask=tf.sequence_mask(seq_in),
+            initial_state=[state_in_h, state_in_c])
+
+        # Postprocess LSTM output with another hidden layer and compute values
+        logits = tf.keras.layers.Dense(
+            self.num_outputs,
+            activation=tf.keras.activations.linear,
+            name="logits")(lstm_out)
+        values = tf.keras.layers.Dense(
+            1, activation=None, name="values")(lstm_out)
+
+        # Create the RNN model
+        self.rnn_model = tf.keras.Model(
+            inputs=[self.input, seq_in, state_in_h, state_in_c],
+            outputs=[logits, values, state_h, state_c])
+        self.register_variables(self.rnn_model.variables)
+        self.rnn_model.summary()
+
+    @override(RecurrentTFModelV2)
+    def forward_rnn(self, inputs, state, seq_lens):
+        model_out, self._value_out, h, c = self.rnn_model([inputs, seq_lens] +
+                                                          state)
+        return model_out, [h, c]
+
+    @override(ModelV2)
+    def get_initial_state(self):
+        return [
+            np.zeros(self.cell_size, np.float32),
+            np.zeros(self.cell_size, np.float32),
+        ]
+
+    @override(ModelV2)
+    def value_function(self):
+        return tf.reshape(self._value_out, [-1])
 
 
 class DeepDrug3D(TFModelV2):
@@ -243,175 +353,75 @@ class DeepDrug3D(TFModelV2):
         return tf.reshape(self._value_out, [-1])
 
 
-class MyKerasModel(TFModelV2):
-    """Custom model for policy gradient algorithms."""
-
-    def __init__(self, obs_space, action_space, num_outputs, model_config,
-                 name):
-        super(MyKerasModel, self).__init__(obs_space, action_space,
-                                           num_outputs, model_config, name)
-        self.inputs = tf.keras.layers.Input(
-            shape=obs_space.shape, name="observations")
-
-        layer_14 = Resnet3DBuilder.build_resnet_34(self.inputs, 400)
-
-        layer_2 = tf.keras.layers.Flatten()(layer_14)
-        layer_3p = tf.keras.layers.Dense(256, activation='relu', name='ftp')(layer_2)
-        layer_4p = tf.keras.layers.Dense(128, activation='relu', name='ftp2')(layer_3p)
-        layer_5p = tf.keras.layers.Dense(64, activation=lrelu, name='ftp3')(layer_4p)
-
-        layer_3v = tf.keras.layers.Dense(256, activation='relu', name='ftv')(layer_2)
-        layer_4v = tf.keras.layers.Dense(128, activation='relu', name='ftv2')(layer_3v)
-        layer_5v = tf.keras.layers.Dense(64, activation=lrelu, name='ftv3')(layer_4v)
-        layer_out = tf.keras.layers.Dense(
-            num_outputs,
-            name="my_out",
-            activation='hard_sigmoid',
-            kernel_initializer=normc_initializer(0.1))(layer_5p)
-
-        value_out = tf.keras.layers.Dense(
-            1,
-            name="value_out",
-            activation=None,
-            kernel_initializer=normc_initializer(0.1))(layer_5v)
-        self.base_model = tf.keras.Model(self.inputs, [layer_out, value_out])
-
-        self.base_model.load_weights('my_model_weights.h5')
-
-        self.register_variables(self.base_model.variables)
-
-    def forward(self, input_dict, state, seq_lens):
-        model_out, self._value_out = self.base_model(input_dict["obs"])
-        return model_out, state
-
-    def value_function(self):
-        return tf.reshape(self._value_out, [-1])
+def env_creator(config):
+    return LactamaseDocking(config)
 
 
-memory_story = 256.00  * 1e+9
-obj_store = 128.00 * 1e+9
-ray.init(memory=memory_story, object_store_memory=obj_store)
-# ray.init()
-
-parser = ArgumentParser()
-parser.add_argument('--ngpu', type=int, default=0)
-parser.add_argument('--ncpu', type=int, default=4)
-args = parser.parse_args()
-
-ModelCatalog.register_custom_model("keras_model", MyKerasModel)
-ModelCatalog.register_custom_model("deepdrug3d", DeepDrug3D)
+def get_args():
+    parser = ArgumentParser()
+    parser.add_argument('--ngpu', type=int, default=0)
+    parser.add_argument('--ncpu', type=int, default=4)
+    parser.add_argument('--local', action='store_true')
+    return parser.parse_args()
 
 
-def env_creator(env_config):
-    return LactamaseDocking(env_config)  # return an env instance
+if __name__ == '__main__':
+    args = get_args()
+    if args.local:
+        ray.init()
+    else:
+        memory_story = 256.00 * 1e+9
+        obj_store = 128.00 * 1e+9
+        ray.init(memory=memory_story, object_store_memory=obj_store)
 
+    ModelCatalog.register_custom_model("deepdrug3d", DeepDrug3D)
+    ModelCatalog.register_custom_model("rnn", MyKerasRNN)
+    register_env("lactamase_docking", env_creator)
 
-register_env("lactamase_docking", env_creator)
+    config = ppo.DEFAULT_CONFIG.copy()
+    ppo_conf = {"lambda": 1.0,
+                "kl_coeff": 0.2,
+                "sgd_minibatch_size": 32,
+                "shuffle_sequences": False,
+                "num_sgd_iter": 200,
+                "train_batch_size": 4000,
+                "lr": 5e-5,
+                "vf_share_layers": True,
+                "vf_loss_coeff": 0.5,
+                "entropy_coeff": 0.01,
+                "clip_param": 0.3,
+                "vf_clip_param": 10.0,
+                "grad_clip": 1.0,
+                "kl_target": 0.01,
+                "gamma": 0.9,
+                'eager': True
+                }
+    config.update(ppo_conf)
+    config['log_level'] = 'INFO'
 
-config = ppo.DEFAULT_CONFIG.copy()
-config['log_level'] = 'INFO'
+    config["num_gpus"] = args.ngpu
+    config["num_workers"] = args.ncpu
+    config['num_envs_per_worker'] = 1
+    config['model'] = {
+        "custom_model": "rnn",
+        "max_seq_len": 16,
+    }
+    config['env_config'] = envconf
+    config['eager'] = True
 
-# ppo_conf = {"lambda": 0.95,
-#             "kl_coeff": 0.3,
-#              "sgd_minibatch_size": 48,
-#             "shuffle_sequences": True,
-#             "num_sgd_iter": 15,
-#             "lr": 5e-5,
-#             "vf_share_layers": True,
-#             "vf_loss_coeff": 0.5,
-#             "entropy_coeff": 0.001,
-#             "entropy_coeff_schedule": None,
-#             "clip_param": 0.2,
-#             "kl_target": 0.01,
-#             "grad_clip": 5.0,
-#             "gamma": 0.999,
-#             "sample_batch_size": 128,
-#             "train_batch_size": 1024
-#             }
-# config.update(ppo_conf)
-ModelCatalog.register_custom_action_dist("my_dist", MultiOrdinal)
+    trainer = ppo.PPOTrainer(config=config, env='lactamase_docking')
+    policy = trainer.get_policy()
+    print(policy.model.base_model.summary())
 
-config["num_gpus"] = args.ngpu  # used for trainer process
-config["num_workers"] = args.ncpu
-config['num_envs_per_worker'] = 1
-config['env_config'] = envconf
-config['horizon'] = envconf['max_steps']
-config['model'] = {"custom_model": 'deepdrug3d', 'custom_action_dist' : 'my_dist'}
-# trainer = ppo.PPOTrainer(config=config, env='lactamase_docking')
-# # trainer.restore('/homes/aclyde11/ray_results/PPO_lactamase_docking_2019-11-22_16-34-28igjfjjyh/checkpoint_1052/checkpoint-1052')
-# policy = trainer.get_policy()
-# print(policy.model.base_model.summary())
-#
-#
-# config['env'] = 'lactamase_docking'
-#
-# for i in range(250):
-#     result = trainer.train()
-#
-#     if i % 1 == 0:
-#         print(pretty_print(result))
-#
-#     if i % 25 == 0:
-#         checkpoint = trainer.save()
-#         print("checkpoint saved at", checkpoint)
-#
-ppo_conf = {"lambda": ray.tune.uniform(0.9, 1.0),
-        "kl_coeff": ray.tune.uniform(0.3, 1),
-        "sgd_minibatch_size": ray.tune.randint(32, 48),
-        "shuffle_sequences": tune.grid_search([True, False]),
-    "num_sgd_iter": ray.tune.randint(2, 32),
-    "lr": ray.tune.loguniform(5e-6, 0.003),
-    "lr_schedule": None,
-    "vf_share_layers": False,
-    "vf_loss_coeff": ray.tune.uniform(0.5, 1.0),
-    "entropy_coeff": ray.tune.loguniform(5e-6, 0.01),
-    "entropy_coeff_schedule": None,
-    "clip_param": tune.grid_search([0.1, 0.2, 0.3]),
-    "vf_clip_param": ray.tune.uniform(1, 15),
-    "grad_clip": ray.tune.uniform(5, 15),
-    "kl_target": ray.tune.uniform(0.003, 0.03),
-    "gamma" : ray.tune.uniform(0.8, 0.9997)
-            }
-config.update(ppo_conf)
-#
-#
-#
-# config.update(ppo_conf)
-#
-# # appo_conf = {
-# #     "use_kl_loss": True,
-# #     "kl_coeff": 0.2,
-# #     "kl_target": 0.01,
-# #     "clip_param": 0.3,
-# #     "lambda": 0.95,
-# #     "vf_loss_coeff": 0.5,
-# #     "entropy_coeff": 0.01,
-# # }
-#
-# config['sample_batch_size'] = 64
-# config['train_batch_size'] = 2096
-#
-# config["num_gpus"] = args.ngpu  # used for trainer process
-# config["num_workers"] = args.ncpu
-# config['num_envs_per_worker'] = 4
-# config['env_config'] = envconf
-# config['model'] = {"custom_model": 'deepdrug3d', "custom_action_dist": 'my_dist'}
-# config['horizon'] = envconf['max_steps']
-#
-#
-# ModelCatalog.register_custom_action_dist("my_dist", MyActionDist)
-#
-# # trainer = impala.ImpalaTrainer(config=config, env='lactamase_docking')
-# # trainer = ppo.PPOTrainer(config=config, env="lactamase_docking")
-# # trainer.restore('/homes/aclyde11/ray_results/PPO_lactamase_docking_2019-11-18_13-40-14ihwtk2lw/checkpoint_51/checkpoint-51')
-# # policy = trainer.get_policy()
-# # print(policy.model.base_model.summary())
-#
-config['env'] = 'lactamase_docking'
-tune.run(
-    "PPO",
-    config=config,
-    name='phase4PPOSearch',
-    checkpoint_freq=100,
-    checkpoint_at_end=True,
-    scheduler=AsyncHyperBandScheduler(time_attr='training_iteration', metric='episode_reward_mean', mode='max', max_t=10000)) # 30 minutes for each
+    config['env'] = 'lactamase_docking'
+
+    for i in range(250):
+        result = trainer.train()
+
+        if i % 1 == 0:
+            print(pretty_print(result))
+
+        if i % 25 == 0:
+            checkpoint = trainer.save()
+            print("checkpoint saved at", checkpoint)
+

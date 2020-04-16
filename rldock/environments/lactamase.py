@@ -1,93 +1,127 @@
 import copy
+import glob
+import math
+from random import randint
 
 import gym
 import numpy as np
 from gym import spaces
-import random
-from random import randint
-from rldock.environments.LPDB import LigandPDB
-from rldock.environments.utils import MultiScorer, Voxelizer, l2_action, MinMax
-import glob
-import math
+from scipy.spatial.transform import Rotation as R
 
-# using 6DPT pdb from Lyu et al. (2019, nature)
+from rldock.environments.LPDB import LigandPDB
+from rldock.environments.utils import MultiScorerFromReceptor, Voxelizer, l2_action, \
+    MinMax, ScorerFromReceptor, Scorer
+
+
 class LactamaseDocking(gym.Env):
     metadata = {'render.modes': ['human']}
 
     ## Init the object
-    def __init__(self, config ):
+    def __init__(self, config, bypass=None):
         super(LactamaseDocking, self).__init__()
         self.config = config
+        if bypass is not None:
+            self.config.update(bypass)
+            config.update(bypass)
         self.viewer = None
-
+        self.logmessage(config)
         dims = np.array(config['bp_dimension']).flatten().astype(np.float32)
+        self.logmessage("config after bypass", config)
+
+        # # #
+        # Used for bound checking
+        # # #
         self.random_space_init = spaces.Box(low=-0.5 * dims,
                                             high=0.5 * dims,
                                             dtype=np.float32)
-
-        #rotations from 0 to 2pi
         self.random_space_rot = spaces.Box(low=0,
                                            high=2 * 3.1415926,
                                            dtype=np.float32,
-                                           shape=(3,1))
+                                           shape=(3, 1))
 
-        lows = -1 * np.array([1] * 9, dtype=np.float32)
-        highs = np.array([1] * 9, dtype=np.float32)
+        # # #
+        # Used for reset position if random set in envconf
+        # # #
+        self.random_space_init_reset = spaces.Box(low=-0.4 * dims,
+                                                  high=0.4 * dims,
+                                                  dtype=np.float32)
+        self.random_space_rot_reset = spaces.Box(low=0,
+                                                 high=2 * 3.1415926,
+                                                 dtype=np.float32,
+                                                 shape=(3, 1))
 
-
-
+        self.voxelcache = {}
         self.use_random = True
 
         if config['discrete']:
-            self.actions_multiplier = np.array([(config['action_space_d'][i] / config['discrete_trans']) / (config['K_trans'] - 1) for i in range(3)]
-                                               + [1.0 / config['discrete_theta'] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
-            self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
-
+            self.actions_multiplier = np.array(
+                [(config['action_space_d'][i] / (config['K_trans'] - 1)) for i in range(3)]
+                + [config['action_space_r'][i] / (config['K_theta'] - 1) for i in range(6)], dtype=np.float32)
+            # self.action_space = spaces.MultiDiscrete([config['K_trans']] * 3 + [config['K_theta']] * 6)
+            self.action_space = spaces.Tuple(
+                [spaces.Discrete(config['K_trans'])] * 3 + [spaces.Discrete(config['K_theta'])] * 3)
 
         else:
+            lows = -1 * np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
+            highs = np.array(list(config['action_space_d']) + list(config['action_space_r']), dtype=np.float32)
             self.action_space = spaces.Box(low=lows,
                                            high=highs,
                                            dtype=np.float32)
 
-
-        self.observation_space = spaces.Dict({"image" : spaces.Box(low=0, high=2, shape=config['output_size'], #shape=(29, 24, 27, 16),
-                                                dtype=np.float32),
-                                              "state_vector" : spaces.Box(low=np.array([-31, 0], dtype=np.float32),
-                                                                          high=np.array([31, 1.1], dtype=np.float32))
-                                            }
-                                        )
+        self.observation_space = spaces.Tuple([spaces.Box(low=0, high=2, shape=config['output_size'], dtype=np.float32),
+                                               spaces.Box(low=-np.inf, high=np.inf, shape=[2], dtype=np.float32)])
 
         self.voxelizer = Voxelizer(config['protein_wo_ligand'], config)
-        self.oe_scorer = MultiScorer(config['oe_box']) # takes input as pdb string of just ligand
-        self.minmaxs = [MinMax(-278, -8.45), MinMax(-1.3, 306.15), MinMax(-17.52, 161.49), MinMax(-2, 25.3)]
+        if self.config['oe_box'] is None:
+            self.oe_scorer = ScorerFromReceptor(
+                self.make_receptor(self.config['protein_wo_ligand'], use_cache=config['use_cache_voxels']))
+        else:
+            self.logmessage("Found OE BOx for recetpor")
+            self.oe_scorer = Scorer(config['oe_box'])
 
+        # self.minmaxs = [MinMax(-278, -8.45), MinMax(-1.3, 306.15), MinMax(-17.52, 161.49), MinMax(-2, 25.3)]
+        self.minmaxs = [MinMax()]
 
         self.reference_ligand = LigandPDB.parse(config['ligand'])
         self.reference_centers = self.reference_ligand.get_center()
-        self.atom_center =  LigandPDB.parse(config['ligand'])
+        self.atom_center = LigandPDB.parse(config['ligand'])
         self.names = []
 
-        if config['random_ligand_folder'] is not None:
+        if config['many_ligands'] and config['random_ligand_folder'] is not None:
             self.train_ligands()
         else:
             self.rligands = None
 
         self.cur_atom = copy.deepcopy(self.atom_center)
-        self.trans = [0,0,0]
-        self.rot   = [0,0,0]
-        self.rot   = [0,0,0]
+        self.trans = [0, 0, 0]
+        self.rot = [0, 0, 0]
+        self.rot = [0, 0, 0]
         self.steps = 0
         self.last_score = 0
         self.cur_reward_sum = 0
         self.name = ""
+
+        self.receptor_refereence_file_name = config['protein_wo_ligand']
+
+        self.ordered_recept_voxels = None
+        # if self.config['movie_mode']:
+        #     import os.path
+        #     listings = glob.glob(self.config['protein_state_folder'] + "*.pdb")
+        #     self.logmessage("listing len", len(listings))
+        #     ordering = list(map(lambda x : int(str(os.path.basename(x)).split('.')[0].split("_")[-1]), listings))
+        #     ordering = np.argsort(ordering)[:200]
+        #     self.logmessage("Making ordering....")
+        #     self.logmessage(listings[0], len(listings))
+        #     self.ordered_recept_voxels = [listings[i] for i in ordering]
 
     def reset_ligand(self, newlig):
         """
         :param newlig: take a LPBD ligand and transform it to center reference
         :return: new LPDB
         """
-        x,y,z  = newlig.get_center()
-        return newlig.translate(self.reference_centers[0] - x , self.reference_centers[1] - y, self.reference_centers[2] - z)
+        x, y, z = newlig.get_center()
+        return newlig.translate(self.reference_centers[0] - x, self.reference_centers[1] - y,
+                                self.reference_centers[2] - z)
 
     def align_rot(self):
         """
@@ -95,10 +129,10 @@ class LactamaseDocking(gym.Env):
         """
         for i in range(3):
             if self.rot[i] < 0:
-                self.rot[i] = 2*3.14159265 + self.rot[i]
+                self.rot[i] = 2 * 3.14159265 + self.rot[i]
             self.rot[i] = self.rot[i] % (2 * 3.14159265)
 
-    def get_action(self, action):
+    def get_action(self, action, use_decay=True):
         """
         Override this function if you want to modify the action in some deterministic sense...
         :param action: action from step funtion
@@ -106,9 +140,12 @@ class LactamaseDocking(gym.Env):
         """
         if self.config['discrete']:
             action = np.array(action) * self.actions_multiplier
-        action = np.array(action).flatten()
-        return action
+        else:
+            action = np.array(action).flatten()
 
+        if use_decay and self.config['decay'] is not None:
+            action = action * math.pow(self.config['decay'], self.steps)
+        return action
 
     def get_penalty_from_overlap(self, obs):
         """
@@ -116,165 +153,259 @@ class LactamaseDocking(gym.Env):
         :param obs: obs from model, or hidden env state
         :return: penalty for overlap, positive value
         """
-        if np.max(obs[:,:,:,-1]) == 2:
-            return 1.0
-        return 0.0
+        return np.sum(obs[0][:, :, :, -1] >= 2)
 
-    def oe_score_combine(self, oescores, average=False):
-        r = 0
-        for i in range(len(oescores)):
-            self.minmaxs[i].update(oescores[i])
-            mins,maxs = self.minmaxs[i]()
-            if oescores[i] > self.minmaxs[i].eps:
-                norm_score = 0
-            else:
-                norm_score = (oescores[i] - maxs) / (maxs - mins)
-            r += norm_score
-
-        if average:
-            r = r / len(oescores)
-        return r
-
-    @staticmethod
-    def Nq(q):
-        t = np.linalg.norm(q)
-        if t == 0:
-            return np.zeros(q.shape)
-        return q / t
-
-    @staticmethod
-    def isRotationMatrix(M, eps = 1e-2):
-        tag = False
-        I = np.identity(M.shape[0])
-        if np.all( np.abs(np.matmul(M, M.T) - I) <= eps) and (np.abs(np.linalg.det(M) - 1) <= eps):
-            tag = True
-        # else:
-        #     print('fail', M, np.abs(np.matmul(M, M.T) - I), np.abs(np.linalg.det(M) - 1))
-        return tag
-
-        #https: // arxiv.org / pdf / 1812.07035.pdf
-    def get_rotation(self, rot):
-        a_1 = np.array(rot[:3], dtype=np.float64)
-        a_2 = np.array(rot[3:], dtype=np.float64)
-
-        b_1 = self.Nq(a_1)
-        b_2 = self.Nq( a_2 - np.dot(b_1, a_2) * b_1)
-        b_3 = np.cross(b_1, b_2)
-
-        M = np.stack([b_1, b_2, b_3]).T
-
-        if self.isRotationMatrix(M):
-            return M.astype(np.float32)
+    def oe_score_combine(self, oescores):
+        if isinstance(oescores, dict):
+            sum = 0
+            for k, score in oescores.items():
+                sum += score
+            return sum / len(oescores)
         else:
-            return np.identity(M.shape[0], dtype=np.float32)
+            return oescores
+
+    def get_rotation_matrix(self, rot):
+        return R.from_euler('xyz', rot, degrees=False).as_matrix()
+
+    def get_rotation(self, rot):
+        return rot
+
+    def get_raw_oe_score(self, name='all'):
+        oe_score = self.oe_scorer(self.cur_atom.toPDB())
+        if name == 'all':
+            return oe_score
+        else:
+            return oe_score[name]
+
+    def get_oe_score(self, name='all'):
+        oe_score = self.get_raw_oe_score(name)
+        oe_score = self.oe_score_combine(oe_score)
+        if oe_score > 25:
+            oe_score = -1
+        else:
+            oe_score = (oe_score - 25) * -1
+        return oe_score
 
     def step(self, action):
         if np.any(np.isnan(action)):
-            print(action)
-            print("ERROR, nan action from get action")
-            exit()
+            self.logerror("ERROR, nan action from get action", action)
 
         action = self.get_action(action)
-        assert(action.shape[0] == 9)
+        rotM = self.get_rotation_matrix(action[3:])
+        assert (action.shape[0] == 6)
 
+        self.cur_atom = self.translate_molecule(self.cur_atom, action[0], action[1], action[2])
+        self.cur_atom = self.rotate_molecule(self.cur_atom, rotM)
 
         self.trans[0] += action[0]
         self.trans[1] += action[1]
         self.trans[2] += action[2]
-        self.rot = self.get_rotation(action[3:])
-
-        self.cur_atom = self.cur_atom.translate(action[0], action[1], action[2])
-        self.cur_atom = self.cur_atom.rotateM(self.rot)
+        self.rot = np.matmul(self.rot, rotM)
         self.steps += 1
 
-        oe_score = self.oe_scorer(self.cur_atom.toPDB())
-        oe_score =  self.oe_score_combine(oe_score)
+        oe_score = self.get_oe_score(name='Chemgauss4')
         reset = self.decide_reset(oe_score)
-
+        improve = oe_score - self.last_score
         self.last_score = oe_score
         obs = self.get_obs()
 
-        w1 = float(1.0)
-        w2 = 0
-        w3 = 0
+        w1 = max(0, self.config['improve_weight'] * improve)
+        w2 = -1 * self.config['l2_decay'] * l2_action(action, self.steps)
+        w3 = -1 * self.config['overlap_weight'] * self.get_penalty_from_overlap(obs)
+        w4 = self.config['score_weight'] * oe_score
+        reward = w1 + w4 + w2 * + w3
 
-        reward = w1 * (-1.0 * oe_score) - w2 * l2_action(action) - w3 * self.get_penalty_from_overlap(obs)
+        if self.config['reward_ramp'] is not None:
+            ramp = max(1.0, self.config['reward_ramp'] * min(1.0, ((self.steps * self.steps - 35) / 20)))
+            reward = reward * ramp
+        else:
+            ramp = None
+
+        if reset:
+            reward = oe_score
+            self.logmessage("final reset value, replaces reward", reward)
+
+        self.logmessage(
+            {"reward": reward,
+             "ramp": ramp,
+             "w1": w1,
+             "w2": w2,
+             "w3": w3,
+             "w4": w4,
+             'cur_step': self.steps,
+             'oe_score': oe_score,
+             'trans': self.trans,
+             'reset': reset})
 
         self.last_reward = reward
         self.cur_reward_sum += reward
 
-        obs = {'image' : obs, 'state_vector' : self.get_state_vector()}
+        if self.config['movie_mode']:
+            self.movie_step(self.steps)
 
-        return obs,\
-               reward,\
+        assert (not np.any(np.isnan(reward)))
+        assert (not np.any(np.isnan(obs[0])))
+        assert (not np.any(np.isnan(obs[1])))
+
+        if reward > 10:
+            reward = 10
+        elif reward < -10:
+            reward = -10
+
+        return obs, \
+               reward, \
                reset, \
-               {}
+               {'atom': self.cur_atom.toPDB(),
+                'protein': self.receptor_refereence_file_name}
 
     def decide_reset(self, score):
-         return (self.steps > self.config['max_steps']) or (not self.check_atom_in_box())
-
-    def get_reward_from_ChemGauss4(self, score, reset=False):
-        # boost = 5 if self.steps > self.config['max_steps'] - 3 else 1
-        score = -1 * score
-        if score < -25:
-            return 0
-        elif score < 0:
-            return 0.01
-        else:
-            return float(score) * 1
-
-
+        return (self.steps >= self.config['max_steps'])
 
     def get_state_vector(self):
         max_steps = self.steps / self.config['max_steps']
-        return np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32)
+        return np.nan_to_num(np.array([float(np.clip(self.last_score, -30, 30)), max_steps]).astype(np.float32),
+                             posinf=100, neginf=-100, nan=-100)
 
+    def logmessage(self, *args, **kwargs):
+        if self.config['debug']:
+            print(*args, **kwargs)
 
-    def reset(self, random=0.2, many_ligands = False):
+    def logerror(self, *args, **kwargs):
+        print(*args, **kwargs)
+        exit()
+
+    def reset_random_recep(self):
+        import random as rs
+        self.receptor_refereence_file_name = list(self.voxelcache.keys())[rs.randint(0, len(self.voxelcache) - 1)]
+        self.voxelizer, self.oe_scorer = self.voxelcache[self.receptor_refereence_file_name]
+
+    def movie_step(self, step=0):
+        try:
+            self.receptor_refereence_file_name = self.ordered_recept_voxels[step]
+        except:
+            self.logerror("Error length...", len(self.ordered_recept_voxels))
+            exit()
+
+        pdb_file_name = self.receptor_refereence_file_name
+
+        if pdb_file_name in self.voxelcache:
+            self.voxelizer, self.oe_scorer = self.voxelcache[pdb_file_name]
+        else:
+            try:
+                self.logmessage("Not in cache, making....", pdb_file_name)
+                self.voxelizer = Voxelizer(pdb_file_name, self.config, write_cache=True)
+                recept = self.make_receptor(pdb_file_name)
+                self.oe_scorer = MultiScorerFromReceptor(recept)
+                self.voxelcache[pdb_file_name] = (self.voxelizer, self.oe_scorer)
+            except:
+                self.logerror("Error, not change.")
+
+    def reset(self, random=None, many_ligands=None, random_dcd=None, load_num=None):
+        random = random or self.config['random']
+        many_ligands = many_ligands or self.config['many_ligands']
+        random_dcd = random_dcd or self.config['random_dcd']
+        load_num = load_num or self.config['load_num']
+
+        # if self.config['movie_mode']:
+        #     import random as rs
+        #     self.movie_step(rs.randint(0, 50))
+        # elif random_dcd:
+        #     import random as rs
+        #     if len(self.voxelcache) < load_num:
+        #         self.logmessage("Voxel cache is empty or with size", len(self.voxelcache))
+        #         listings = glob.glob(self.config['protein_state_folder'] + "*.pdb")
+        #         self.logmessage("Found", len(listings), "protein states in folder.")
+        #         while len(self.voxelcache) < load_num:
+        #             pdb_file_name = rs.choice(listings)
+        #
+        #             if pdb_file_name in self.voxelcache:
+        #                 self.voxelizer, self.oe_scorer = self.voxelcache[pdb_file_name]
+        #             else:
+        #                 try:
+        #                     self.logmessage("Not in cache, making....", pdb_file_name)
+        #                     self.voxelizer = Voxelizer(pdb_file_name, self.config, write_cache=True)
+        #                     recept = self.make_receptor(pdb_file_name)
+        #                     self.oe_scorer = MultiScorerFromReceptor(recept)
+        #                     self.voxelcache[pdb_file_name] = (self.voxelizer, self.oe_scorer)
+        #                 except:
+        #                     self.logerror("Error, not change.")
+        #
+        #     self.reset_random_recep()
+
         if many_ligands and self.rligands != None and self.use_random:
             idz = randint(0, len(self.rligands) - 1)
             start_atom = copy.deepcopy(self.rligands[idz])
             self.name = self.names[idz]
-
-        elif many_ligands and self.rligands != None :
+        elif many_ligands and self.rligands != None:
             start_atom = copy.deepcopy(self.rligands.pop(0))
             self.name = self.names.pop(0)
         else:
             start_atom = copy.deepcopy(self.atom_center)
 
         if random is not None and float(random) != 0:
-            x,y,z, = self.random_space_init.sample().flatten().ravel() * float(random)
-            x_theta, y_theta, z_theta = self.random_space_rot.sample().flatten().ravel() * float(random)
-            self.trans = [x,y,z]
-            random_pos = start_atom.translate(x,y,z)
-            random_pos = random_pos.rotate(theta_x=x_theta, theta_y=y_theta, theta_z=z_theta)
+            x, y, z, = self.random_space_init_reset.sample().flatten().ravel() * float(random)
+            x_theta, y_theta, z_theta = self.random_space_rot_reset.sample().flatten().ravel() * float(random)
+            rot = self.get_rotation_matrix(np.array([x_theta, y_theta, z_theta]))
+            self.trans = [x, y, z]
+            self.rot = rot
+            random_pos = self.translate_molecule(start_atom, x, y, z)
+            random_pos = self.rotate_molecule(random_pos, rot)
         else:
-            self.trans = [0,0,0]
-            random_pos = start_atom
+            if self.config['ref_ligand_move'] is not None:
+                self.trans = self.config['ref_ligand_move']
+            else:
+                self.trans = [0, 0, 0]
+            random_pos = self.translate_molecule(start_atom, *self.trans)
 
         self.cur_atom = random_pos
         self.last_score = self.oe_score_combine(self.oe_scorer(self.cur_atom.toPDB()))
         self.steps = 0
-        self.cur_reward_sum=0
+        self.cur_reward_sum = 0
         self.last_reward = 0
         self.next_exit = False
         self.decay_v = 1.0
-        return {'image' : self.get_obs(), 'state_vector' : self.get_state_vector()}
+
+        self.logmessage("Reset ligand", self.trans, self.rot)
+        return self.get_obs()
 
     def get_obs(self, quantity='all'):
-        x= self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
-        if self.config['debug']:
-            print("SHAPE", x.shape)
-        return x
+        x = self.voxelizer(self.cur_atom.toPDB(), quantity=quantity).squeeze(0).astype(np.float32)
+        return (x, np.array([0.0, self.steps]))
+
+    def make_receptor(self, pdb, use_cache=True):
+        from openeye import oedocking, oechem
+        import os.path
+
+        file_name = str(os.path.basename(pdb))
+        check_oeb = self.config['cache'] + file_name.split(".")[0] + ".oeb"
+        if use_cache and os.path.isfile(check_oeb):
+            self.logmessage("Using stored receptor", check_oeb)
+
+            g = oechem.OEGraphMol()
+            oedocking.OEReadReceptorFile(g, check_oeb)
+            return g
+        else:
+            self.logmessage("NO OEBOX, creating recetpor on fly for base protein", check_oeb, pdb)
+
+            proteinStructure = oechem.OEGraphMol()
+            ifs = oechem.oemolistream(pdb)
+            ifs.SetFormat(oechem.OEFormat_PDB)
+            oechem.OEReadMolecule(ifs, proteinStructure)
+
+            box = oedocking.OEBox(*self.config['bp_max'], *self.config['bp_min'])
+
+            receptor = oechem.OEGraphMol()
+            s = oedocking.OEMakeReceptor(receptor, proteinStructure, box)
+            self.logmessage("make_receptor bool", s)
+            oedocking.OEWriteReceptorFile(receptor, check_oeb)
+            return receptor
 
     def render(self, mode='human'):
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import pyplot as plt
-        from matplotlib.figure import Figure
 
-        obs = (self.get_obs(quantity='ligand')[:,:,:,-1]).squeeze()
-        obs1 = (self.get_obs(quantity='protein')[:,:,:,-1]).squeeze()
+        obs = (self.get_obs(quantity='ligand')[:, :, :, -1]).squeeze()
+        obs1 = (self.get_obs(quantity='protein')[:, :, :, -1]).squeeze()
         # np.save("/Users/austin/obs.npy", obs)
         # np.save("/Users/austin/pro.npy", obs1)
         print(obs.shape)
@@ -288,7 +419,7 @@ class LactamaseDocking(gym.Env):
         for i in range(obs.shape[0]):
             for j in range(obs.shape[1]):
                 for z in range(obs.shape[2]):
-                    if obs[i,j,z] == 1:
+                    if obs[i, j, z] == 1:
                         coords_x.append(i)
                         coords_y.append(j)
                         coords_z.append(z)
@@ -299,12 +430,13 @@ class LactamaseDocking(gym.Env):
         for i in range(obs.shape[0]):
             for j in range(obs.shape[1]):
                 for z in range(obs.shape[2]):
-                    if obs1[i,j,z] == 1:
+                    if obs1[i, j, z] == 1:
                         coords_x1.append(i)
                         coords_y1.append(j)
                         coords_z1.append(z)
 
-        ax.set_title("Current step:" + str(self.steps) + ", Curr Reward" + str(self.last_reward) + ', Curr RSUm' + str(self.cur_reward_sum)+ 'score'+ str(self.last_score))
+        ax.set_title("Current step:" + str(self.steps) + ", Curr Reward" + str(self.last_reward) + ', Curr RSUm' + str(
+            self.cur_reward_sum) + 'score' + str(self.last_score))
         try:
             ax.plot_trisurf(coords_x, coords_y, coords_z, linewidth=0.2, antialiased=True)
             ax.plot_trisurf(coords_x1, coords_y1, coords_z1, linewidth=0.2, antialiased=True, alpha=0.5)
@@ -312,12 +444,12 @@ class LactamaseDocking(gym.Env):
         except:
             pass
 
-        ax.set_xlim(0,25)
-        ax.set_ylim(0,26)
-        ax.set_zlim(0,27)
+        ax.set_xlim(0, 40)
+        ax.set_ylim(0, 40)
+        ax.set_zlim(0, 40)
         # fig.show()
         canvas.draw()  # draw the canvas, cache the renderer
-        width , height = fig.get_size_inches() * fig.get_dpi()
+        width, height = fig.get_size_inches() * fig.get_dpi()
         img = np.fromstring(canvas.tostring_rgb(), dtype=np.uint8)
         img = img.reshape(100 * 10, 100 * 10, 3)
 
@@ -342,15 +474,27 @@ class LactamaseDocking(gym.Env):
     def eval_ligands(self):
         self.rligands = glob.glob(self.config['random_ligand_folder_test'] + "/*.pdb")
         self.names = copy.deepcopy(self.rligands)
-        self.names = list(map(lambda x : x.split('/')[-1].split('.')[0], self.rligands))
+        self.names = list(map(lambda x: x.split('/')[-1].split('.')[0], self.rligands))
 
         for i in range(len(self.rligands)):
             self.rligands[i] = self.reset_ligand(LigandPDB.parse(self.rligands[i]))
 
     def train_ligands(self):
         self.rligands = glob.glob(self.config['random_ligand_folder'] + "/*.pdb") + [self.config['ligand']]
-        self.names = list(map(lambda x : x.split('/')[-1].split('.')[0], self.rligands))
+        self.names = list(map(lambda x: x.split('/')[-1].split('.')[0], self.rligands))
 
         for i in range(len(self.rligands)):
             self.rligands[i] = self.reset_ligand(LigandPDB.parse(self.rligands[i]))
-        assert(len(self.rligands) == len(self.names))
+        assert (len(self.rligands) == len(self.names))
+
+    def rotate_molecule(self, mol, *args, **kwargs):
+        if not self.config['action_space_r_stop']:
+            return mol.rotateM(*args, **kwargs)
+        else:
+            return mol
+
+    def translate_molecule(self, mol, *args, **kwargs):
+        if not self.config['action_space_d_stop']:
+            return mol.translate(*args, **kwargs)
+        else:
+            return mol
