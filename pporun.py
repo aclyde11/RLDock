@@ -136,10 +136,10 @@ class MyKerasModel(TFModelV2):
         return tf.reshape(self._value_out, [-1])
 
 
-memory_story = 256.00  * 1e+9
-obj_store = 128.00 * 1e+9
-ray.init(memory=memory_story, object_store_memory=obj_store)
-# ray.init()
+# memory_story = 256.00  * 1e+9
+# obj_store = 128.00 * 1e+9
+# ray.init(memory=memory_story, object_store_memory=obj_store)
+ray.init()
 
 parser = ArgumentParser()
 parser.add_argument('--ngpu', type=int, default=0)
