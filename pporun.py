@@ -20,7 +20,6 @@ from ray.rllib.utils import try_import_tf
 from rldock.voxel_policy.utils_tf2 import lrelu
 from ray.tune.schedulers import HyperBandScheduler, AsyncHyperBandScheduler
 from rldock.environments.lactamase import  LactamaseDocking
-from resnet import Resnet3DBuilder
 tf = try_import_tf()
 
 class DeepDrug3D(TFModelV2):
@@ -89,56 +88,6 @@ class DeepDrug3D(TFModelV2):
         return tf.reshape(self._value_out, [-1])
 
 
-
-class MyKerasModel(TFModelV2):
-    """Custom model for policy gradient algorithms."""
-
-    def __init__(self, obs_space, action_space, num_outputs, model_config,
-                 name):
-        super(MyKerasModel, self).__init__(obs_space, action_space,
-                                           num_outputs, model_config, name)
-        self.inputs = tf.keras.layers.Input(
-            shape=obs_space.shape, name="observations")
-
-        layer_14 =  Resnet3DBuilder.build_resnet_34(self.inputs, 400)
-
-
-        layer_2 = tf.keras.layers.Flatten()(layer_14)
-        layer_3p = tf.keras.layers.Dense(256, activation='relu', name='ftp')(layer_2)
-        layer_4p = tf.keras.layers.Dense(128, activation='relu', name='ftp2')(layer_3p)
-        layer_5p = tf.keras.layers.Dense(64, activation=lrelu, name='ftp3')(layer_4p)
-
-        layer_3v = tf.keras.layers.Dense(256, activation='relu', name='ftv')(layer_2)
-        layer_4v = tf.keras.layers.Dense(128, activation='relu', name='ftv2')(layer_3v)
-        layer_5v = tf.keras.layers.Dense(64, activation=lrelu, name='ftv3')(layer_4v)
-        layer_out = tf.keras.layers.Dense(
-            num_outputs,
-            name="my_out",
-            activation='hard_sigmoid',
-            kernel_initializer=normc_initializer(0.1))(layer_5p)
-
-        value_out = tf.keras.layers.Dense(
-            1,
-            name="value_out",
-            activation=None,
-            kernel_initializer=normc_initializer(0.1))(layer_5v)
-        self.base_model = tf.keras.Model(self.inputs, [layer_out, value_out])
-
-        self.base_model.load_weights('my_model_weights.h5')
-
-        self.register_variables(self.base_model.variables)
-
-    def forward(self, input_dict, state, seq_lens):
-        model_out, self._value_out = self.base_model(input_dict["obs"])
-        return model_out, state
-
-    def value_function(self):
-        return tf.reshape(self._value_out, [-1])
-
-
-# memory_story = 256.00  * 1e+9
-# obj_store = 128.00 * 1e+9
-# ray.init(memory=memory_story, object_store_memory=obj_store)
 ray.init()
 
 parser = ArgumentParser()
@@ -146,7 +95,6 @@ parser.add_argument('--ngpu', type=int, default=0)
 parser.add_argument('--ncpu', type=int, default=4)
 args = parser.parse_args()
 
-ModelCatalog.register_custom_model("keras_model", MyKerasModel)
 ModelCatalog.register_custom_model("deepdrug3d", DeepDrug3D)
 
 def env_creator(env_config):
@@ -186,9 +134,7 @@ config['env_config'] = envconf
 config['model'] = {"custom_model": 'deepdrug3d'}
 config['horizon'] = envconf['max_steps']
 
-# trainer = impala.ImpalaTrainer(config=config, env='lactamase_docking')
 trainer = ppo.PPOTrainer(config=config, env="lactamase_docking")
-# trainer.restore('/homes/aclyde11/ray_results/PPO_lactamase_docking_2019-11-18_13-40-14ihwtk2lw/checkpoint_51/checkpoint-51')
 policy = trainer.get_policy()
 print(policy.model.base_model.summary())
 
